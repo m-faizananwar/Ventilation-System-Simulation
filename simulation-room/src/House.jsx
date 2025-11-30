@@ -51,16 +51,31 @@ function Window({ position, args }) {
 }
 
 function Door({ position, args, open = false }) {
+    const [width, height] = args;
+    const frameThickness = 0.1;
+    const frameDepth = 0.3;
+
     return (
         <group position={position}>
-            {/* Frame */}
-            <mesh position={[0, args[1] / 2, 0]}>
-                <boxGeometry args={[args[0] + 0.2, args[1] + 0.2, 0.3]} />
+            {/* Frame Top */}
+            <mesh position={[0, height + frameThickness / 2, 0]}>
+                <boxGeometry args={[width + frameThickness * 2, frameThickness, frameDepth]} />
                 <meshStandardMaterial color={COLORS.frame} />
             </mesh>
+            {/* Frame Left */}
+            <mesh position={[-(width / 2 + frameThickness / 2), height / 2, 0]}>
+                <boxGeometry args={[frameThickness, height, frameDepth]} />
+                <meshStandardMaterial color={COLORS.frame} />
+            </mesh>
+            {/* Frame Right */}
+            <mesh position={[width / 2 + frameThickness / 2, height / 2, 0]}>
+                <boxGeometry args={[frameThickness, height, frameDepth]} />
+                <meshStandardMaterial color={COLORS.frame} />
+            </mesh>
+
             {/* Door Panel (Visual only, no collider so we can walk through if "open") */}
-            <mesh position={[open ? args[0] / 2 : 0, args[1] / 2, 0]} rotation={[0, open ? Math.PI / 2 : 0, 0]}>
-                <boxGeometry args={[args[0], args[1], 0.1]} />
+            <mesh position={[open ? width / 2 : 0, height / 2, 0]} rotation={[0, open ? Math.PI / 2 : 0, 0]}>
+                <boxGeometry args={[width, height, 0.1]} />
                 <meshStandardMaterial color={COLORS.door} />
             </mesh>
         </group>
