@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "author": "Smart Corridor Ultimate",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-c3-devkitm-1", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    
+    { "type": "wokwi-potentiometer", "id": "pot_pm25", "top": -150, "left": -100, "attrs": { "label": "Dust Level (PM2.5)" } },
+    { "type": "wokwi-potentiometer", "id": "pot_co2", "top": -150, "left": 100, "attrs": { "label": "CO2 Level" } },
+    { "type": "wokwi-slide-switch", "id": "sw_smoke", "top": -130, "left": 250, "attrs": { "label": "Smoke Alarm" } },
+    
+    { "type": "wokwi-servo", "id": "fan1", "top": 200, "left": 150, "attrs": { "label": "Vent Fan 1" } },
+    { "type": "wokwi-led", "id": "led_green", "top": 150, "left": -50, "attrs": { "color": "green", "label": "SAFE" } },
+    { "type": "wokwi-led", "id": "led_red", "top": 150, "left": 50, "attrs": { "color": "red", "label": "ALERT" } },
+    { "type": "wokwi-led", "id": "led_blue", "top": 200, "left": 50, "attrs": { "color": "blue", "label": "FAN STATUS" } }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    
+    [ "pot_pm25:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "pot_pm25:VCC", "esp:3V3.1", "red", [ "v0" ] ],
+    [ "pot_pm25:SIG", "esp:0", "green", [ "v0" ] ],
+    
+    [ "pot_co2:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "pot_co2:VCC", "esp:3V3.1", "red", [ "v0" ] ],
+    [ "pot_co2:SIG", "esp:1", "orange", [ "v0" ] ],
+    
+    [ "sw_smoke:1", "esp:GND.2", "black", [ "v0" ] ],
+    [ "sw_smoke:2", "esp:3", "purple", [ "v0" ] ],
+    [ "sw_smoke:3", "esp:3V3.2", "red", [ "v0" ] ],
+    
+    [ "led_green:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "led_green:A", "esp:10", "green", [ "v0" ] ],
+    
+    [ "led_red:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "led_red:A", "esp:8", "red", [ "v0" ] ],
+    
+    [ "led_blue:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "led_blue:A", "esp:9", "blue", [ "v0" ] ],
+    
+    [ "fan1:VCC", "esp:5V", "red", [ "v0" ] ],
+    [ "fan1:GND", "esp:GND.2", "black", [ "v0" ] ],
+    [ "fan1:PWM", "esp:9", "blue", [ "v0" ] ]
+  ]
+}
