@@ -6,6 +6,8 @@ import { World } from './World';
 import { Player } from './Player';
 import './App.css';
 
+import { Physics } from '@react-three/rapier';
+
 function App() {
   return (
     <div id="canvas-container">
@@ -23,10 +25,12 @@ function App() {
             <ambientLight intensity={0.3} />
             <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
 
-            <World />
-            <House position={[0, 0, 0]} />
+            <Physics gravity={[0, -9.81, 0]}>
+              <World />
+              <House position={[0, 0, 0]} />
+              <Player />
+            </Physics>
 
-            <Player />
             <Environment preset="night" />
           </Suspense>
         </Canvas>

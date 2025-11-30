@@ -1,61 +1,64 @@
 import React from 'react';
 import { Stars, Sky } from '@react-three/drei';
+import { RigidBody } from '@react-three/rapier';
 
 export function World(props) {
     return (
         <group {...props}>
-            {/* Grass Ground */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]}>
-                <planeGeometry args={[200, 200]} />
-                <meshStandardMaterial color="#4caf50" />
-            </mesh>
+            <RigidBody type="fixed" colliders="cuboid">
+                {/* Grass Ground */}
+                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]}>
+                    <planeGeometry args={[200, 200]} />
+                    <meshStandardMaterial color="#4caf50" />
+                </mesh>
 
-            {/* Street */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 40]}>
-                <planeGeometry args={[200, 20]} />
-                <meshStandardMaterial color="#333" />
-            </mesh>
+                {/* Street */}
+                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 40]}>
+                    <planeGeometry args={[200, 20]} />
+                    <meshStandardMaterial color="#333" />
+                </mesh>
 
-            {/* Driveway */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[15, -0.04, 20]}>
-                <planeGeometry args={[10, 30]} />
-                <meshStandardMaterial color="#555" />
-            </mesh>
+                {/* Driveway */}
+                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[15, -0.04, 20]}>
+                    <planeGeometry args={[10, 30]} />
+                    <meshStandardMaterial color="#555" />
+                </mesh>
 
-            {/* Pathway to Entrance */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.04, 20]}>
-                <planeGeometry args={[4, 30]} />
-                <meshStandardMaterial color="#777" />
-            </mesh>
+                {/* Pathway to Entrance */}
+                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.04, 20]}>
+                    <planeGeometry args={[4, 30]} />
+                    <meshStandardMaterial color="#777" />
+                </mesh>
 
-            {/* Fence (Simple representation) */}
-            <group>
-                {/* Front Fence Left */}
-                <mesh position={[-25, 1, 30]}>
-                    <boxGeometry args={[50, 2, 0.5]} />
-                    <meshStandardMaterial color="white" />
-                </mesh>
-                {/* Front Fence Right */}
-                <mesh position={[35, 1, 30]}>
-                    <boxGeometry args={[30, 2, 0.5]} />
-                    <meshStandardMaterial color="white" />
-                </mesh>
-                {/* Left Fence */}
-                <mesh position={[-50, 1, 0]} rotation={[0, Math.PI / 2, 0]}>
-                    <boxGeometry args={[60, 2, 0.5]} />
-                    <meshStandardMaterial color="white" />
-                </mesh>
-                {/* Right Fence */}
-                <mesh position={[50, 1, 0]} rotation={[0, Math.PI / 2, 0]}>
-                    <boxGeometry args={[60, 2, 0.5]} />
-                    <meshStandardMaterial color="white" />
-                </mesh>
-                {/* Back Fence */}
-                <mesh position={[0, 1, -30]}>
-                    <boxGeometry args={[100, 2, 0.5]} />
-                    <meshStandardMaterial color="white" />
-                </mesh>
-            </group>
+                {/* Fence (Simple representation) */}
+                <group>
+                    {/* Front Fence Left */}
+                    <mesh position={[-25, 1, 30]}>
+                        <boxGeometry args={[50, 2, 0.5]} />
+                        <meshStandardMaterial color="white" />
+                    </mesh>
+                    {/* Front Fence Right */}
+                    <mesh position={[35, 1, 30]}>
+                        <boxGeometry args={[30, 2, 0.5]} />
+                        <meshStandardMaterial color="white" />
+                    </mesh>
+                    {/* Left Fence */}
+                    <mesh position={[-50, 1, 0]} rotation={[0, Math.PI / 2, 0]}>
+                        <boxGeometry args={[60, 2, 0.5]} />
+                        <meshStandardMaterial color="white" />
+                    </mesh>
+                    {/* Right Fence */}
+                    <mesh position={[50, 1, 0]} rotation={[0, Math.PI / 2, 0]}>
+                        <boxGeometry args={[60, 2, 0.5]} />
+                        <meshStandardMaterial color="white" />
+                    </mesh>
+                    {/* Back Fence */}
+                    <mesh position={[0, 1, -30]}>
+                        <boxGeometry args={[100, 2, 0.5]} />
+                        <meshStandardMaterial color="white" />
+                    </mesh>
+                </group>
+            </RigidBody>
 
             {/* Sky & Environment */}
             <Sky sunPosition={[100, 20, 100]} />
