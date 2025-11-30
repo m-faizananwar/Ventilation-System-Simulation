@@ -116,10 +116,21 @@ export function House(props) {
                     <Wall position={[20, 2.5, 0]} args={[0.5, 5, 20]} color={COLORS.wallWhite} /> {/* Right */}
                     <Wall position={[5, 2.5, -10]} args={[30, 5, 0.5]} color={COLORS.wallWhite} /> {/* Back */}
 
-                    {/* Front Wall with Door and Window */}
-                    <Wall position={[-5, 2.5, 10]} args={[10, 5, 0.5]} color={COLORS.wallAccent} />
-                    <Wall position={[10, 2.5, 10]} args={[20, 5, 0.5]} color={COLORS.wallAccent} />
-                    <Wall position={[2.5, 4, 10]} args={[5, 2, 0.5]} color={COLORS.wallAccent} />
+                    {/* Front Wall Segments (Creating gaps for doors) */}
+                    {/* Left Corner to Main Door [-10 to 1] -> Width 11, Center -4.5 */}
+                    <Wall position={[-4.5, 2.5, 10]} args={[11, 5, 0.5]} color={COLORS.wallAccent} />
+
+                    {/* Main Door to Garage Door [4 to 11] -> Width 7, Center 7.5 */}
+                    <Wall position={[7.5, 2.5, 10]} args={[7, 5, 0.5]} color={COLORS.wallAccent} />
+
+                    {/* Garage Door to Right Corner [19 to 20] -> Width 1, Center 19.5 */}
+                    <Wall position={[19.5, 2.5, 10]} args={[1, 5, 0.5]} color={COLORS.wallAccent} />
+
+                    {/* Header above Main Door [1 to 4] -> Width 3, Height 1 (Door is 4 high) */}
+                    <Wall position={[2.5, 4.5, 10]} args={[3, 1, 0.5]} color={COLORS.wallAccent} />
+
+                    {/* Header above Garage Door [11 to 19] -> Width 8, Height 1 (Door is 4 high) */}
+                    <Wall position={[15, 4.5, 10]} args={[8, 1, 0.5]} color={COLORS.wallAccent} />
 
                     {/* Interior Walls */}
                     <Wall position={[5, 2.5, 0]} args={[0.5, 5, 20]} color={COLORS.wallWhite} /> {/* Separating Garage/Kitchen */}
