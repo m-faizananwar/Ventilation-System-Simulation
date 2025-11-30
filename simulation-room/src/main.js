@@ -6,8 +6,32 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 
 // Scene Setup
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a1a1a); // Darker, moodier background
-scene.fog = new THREE.FogExp2(0x1a1a1a, 0.03);
+scene.background = new THREE.Color(0x050510); // Dark night sky
+scene.fog = new THREE.FogExp2(0x050510, 0.015); // Reduced fog for outside visibility
+
+// Starfield (Skybox)
+const starGeo = new THREE.BufferGeometry();
+const starCount = 2000;
+const starPos = new Float32Array(starCount * 3);
+for (let i = 0; i < starCount * 3; i++) {
+    starPos[i] = (Math.random() - 0.5) * 200;
+}
+starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.2 });
+const stars = new THREE.Points(starGeo, starMat);
+scene.add(stars);
+
+// External Ground
+const extGroundGeo = new THREE.PlaneGeometry(200, 200);
+const extGroundMat = new THREE.MeshStandardMaterial({
+    color: 0x080808,
+    roughness: 0.9,
+    metalness: 0.1
+});
+const extGround = new THREE.Mesh(extGroundGeo, extGroundMat);
+extGround.rotation.x = -Math.PI / 2;
+extGround.position.y = -0.1; // Slightly below room floor
+scene.add(extGround);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 1.6, 5);
@@ -40,13 +64,16 @@ brickTexture.repeat.set(2, 1);
 // Materials
 const floorMaterial = new THREE.MeshStandardMaterial({
     map: woodTexture,
-    roughness: 0.8,
-    metalness: 0.1
+    roughness: 0.1, // Polished wood
+    metalness: 0.1,
+    envMapIntensity: 1.0
 });
 const wallMaterial = new THREE.MeshStandardMaterial({
     map: concreteTexture,
-    roughness: 0.9,
-    metalness: 0.1
+    roughness: 0.2, // Much smoother
+    metalness: 0.1,
+    color: 0xffffff, // Bright white
+    envMapIntensity: 1.0
 });
 const brickMaterial = new THREE.MeshStandardMaterial({
     map: brickTexture,
@@ -87,10 +114,75 @@ scene.add(ceiling);
 // Walls
 const wallGeometry = new THREE.BoxGeometry(roomWidth, roomHeight, 0.2);
 
-const backWall = new THREE.Mesh(wallGeometry, wallMaterial);
-backWall.position.set(0, roomHeight / 2, -roomDepth / 2);
-backWall.receiveShadow = true;
-scene.add(backWall);
+// Back Wall with Window
+const windowWidth = 8;
+const windowHeight = 4;
+const wallParts = [];
+
+// Top part
+const topWallGeo = new THREE.BoxGeometry(roomWidth, (roomHeight - windowHeight) / 2, 0.2);
+const topWall = new THREE.Mesh(topWallGeo, wallMaterial);
+topWall.position.set(0, roomHeight - (roomHeight - windowHeight) / 4, -roomDepth / 2);
+topWall.receiveShadow = true;
+scene.add(topWall);
+
+// Bottom part
+const bottomWallGeo = new THREE.BoxGeometry(roomWidth, (roomHeight - windowHeight) / 2, 0.2);
+const bottomWall = new THREE.Mesh(bottomWallGeo, wallMaterial);
+bottomWall.position.set(0, (roomHeight - windowHeight) / 4, -roomDepth / 2);
+bottomWall.receiveShadow = true;
+scene.add(bottomWall);
+
+// Left part
+const sidePartWidth = (roomWidth - windowWidth) / 2;
+const sidePartGeo = new THREE.BoxGeometry(sidePartWidth, windowHeight, 0.2);
+const leftPart = new THREE.Mesh(sidePartGeo, wallMaterial);
+leftPart.position.set(-roomWidth / 2 + sidePartWidth / 2, roomHeight / 2, -roomDepth / 2);
+leftPart.receiveShadow = true;
+scene.add(leftPart);
+
+// Right part
+const rightPart = new THREE.Mesh(sidePartGeo, wallMaterial);
+rightPart.position.set(roomWidth / 2 - sidePartWidth / 2, roomHeight / 2, -roomDepth / 2);
+rightPart.receiveShadow = true;
+scene.add(rightPart);
+
+// Window Glass
+const glassGeo = new THREE.PlaneGeometry(windowWidth, windowHeight);
+const glassMat = new THREE.MeshPhysicalMaterial({
+    color: 0x88ccff,
+    metalness: 0.1,
+    roughness: 0.05,
+    transmission: 0.9, // Glass-like
+    transparent: true,
+    opacity: 0.3
+});
+const windowGlass = new THREE.Mesh(glassGeo, glassMat);
+windowGlass.position.set(0, roomHeight / 2, -roomDepth / 2);
+scene.add(windowGlass);
+
+// Window Frame
+const frameThickness = 0.1;
+const frameDepth = 0.3;
+const frameGeoH = new THREE.BoxGeometry(windowWidth + frameThickness * 2, frameThickness, frameDepth);
+const frameGeoV = new THREE.BoxGeometry(frameThickness, windowHeight, frameDepth);
+const frameMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 });
+
+const frameTop = new THREE.Mesh(frameGeoH, frameMat);
+frameTop.position.set(0, roomHeight / 2 + windowHeight / 2 + frameThickness / 2, -roomDepth / 2);
+scene.add(frameTop);
+
+const frameBottom = new THREE.Mesh(frameGeoH, frameMat);
+frameBottom.position.set(0, roomHeight / 2 - windowHeight / 2 - frameThickness / 2, -roomDepth / 2);
+scene.add(frameBottom);
+
+const frameLeft = new THREE.Mesh(frameGeoV, frameMat);
+frameLeft.position.set(-windowWidth / 2 - frameThickness / 2, roomHeight / 2, -roomDepth / 2);
+scene.add(frameLeft);
+
+const frameRight = new THREE.Mesh(frameGeoV, frameMat);
+frameRight.position.set(windowWidth / 2 + frameThickness / 2, roomHeight / 2, -roomDepth / 2);
+scene.add(frameRight);
 
 const frontWall = new THREE.Mesh(wallGeometry, wallMaterial);
 frontWall.position.set(0, roomHeight / 2, roomDepth / 2);
@@ -109,8 +201,36 @@ rightWall.receiveShadow = true;
 scene.add(rightWall);
 
 // Lights
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+// Lights
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // Brighter ambient
 scene.add(ambientLight);
+
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6); // Sky/Ground light for better fill
+scene.add(hemiLight);
+
+// Neon Strips
+const neonMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+const neonMaterial2 = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+
+const stripGeo = new THREE.BoxGeometry(roomWidth - 0.5, 0.1, 0.1);
+
+// Ceiling Strip 1 (Cyan)
+const strip1 = new THREE.Mesh(stripGeo, neonMaterial);
+strip1.position.set(0, roomHeight - 0.1, -roomDepth / 2 + 0.5);
+scene.add(strip1);
+
+const stripLight1 = new THREE.PointLight(0x00ffff, 2, 10);
+stripLight1.position.set(0, roomHeight - 1, -roomDepth / 2 + 1);
+scene.add(stripLight1);
+
+// Ceiling Strip 2 (Magenta)
+const strip2 = new THREE.Mesh(stripGeo, neonMaterial2);
+strip2.position.set(0, roomHeight - 0.1, roomDepth / 2 - 0.5);
+scene.add(strip2);
+
+const stripLight2 = new THREE.PointLight(0xff00ff, 2, 10);
+stripLight2.position.set(0, roomHeight - 1, roomDepth / 2 - 1);
+scene.add(stripLight2);
 
 // Warm Spotlights (Track lighting feel)
 const spotLight1 = new THREE.SpotLight(0xffaa55, 100);
@@ -268,9 +388,9 @@ const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-bloomPass.threshold = 0.2; // Lower threshold to make fire glow
-bloomPass.strength = 1.2;
-bloomPass.radius = 0.5;
+bloomPass.threshold = 0.1; // Lower threshold for more glow
+bloomPass.strength = 1.5; // Stronger glow
+bloomPass.radius = 0.8; // Wider glow
 composer.addPass(bloomPass);
 
 // Controls
