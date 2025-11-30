@@ -3,7 +3,7 @@ import { useThree, useFrame } from '@react-three/fiber';
 import { useKeyboardControls, PointerLockControls } from '@react-three/drei';
 import * as THREE from 'three';
 
-const SPEED = 5;
+const SPEED = 15;
 
 export function Player(props) {
     const { camera } = useThree();

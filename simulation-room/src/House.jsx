@@ -1,18 +1,18 @@
 import React from 'react';
 import { DoubleSide } from 'three';
 
-// Colors from sample.scss
+// Premium Palace Colors
 const COLORS = {
-    bg1: '#181a19',
-    green1: '#546b5a',
-    green5: '#111419',
-    white1: '#dfddd6',
-    neon: '#abf1f1',
-    red1: '#e02e24',
-    blue1: '#1896de',
+    floor: '#1a1a1a', // Dark marble
+    wall: '#f5f5dc', // Beige/Cream
+    ceiling: '#111419', // Dark
+    gold: '#ffd700', // Gold accents
+    red: '#8b0000', // Royal Red
+    pillar: '#e0e0e0', // Marble white
+    neon: '#abf1f1', // Subtle neon
 };
 
-function Wall({ position, args, color = COLORS.white1, rotation = [0, 0, 0] }) {
+function Wall({ position, args, color = COLORS.wall, rotation = [0, 0, 0] }) {
     return (
         <mesh position={position} rotation={rotation}>
             <boxGeometry args={args} />
@@ -21,69 +21,102 @@ function Wall({ position, args, color = COLORS.white1, rotation = [0, 0, 0] }) {
     );
 }
 
-function Floor({ position, args, color = COLORS.green5 }) {
+function Floor({ position, args, color = COLORS.floor }) {
     return (
         <mesh position={position} rotation={[-Math.PI / 2, 0, 0]}>
             <planeGeometry args={args} />
-            <meshStandardMaterial color={color} side={DoubleSide} />
+            <meshStandardMaterial color={color} side={DoubleSide} roughness={0.1} metalness={0.1} />
         </mesh>
+    )
+}
+
+function Pillar({ position }) {
+    return (
+        <group position={position}>
+            <mesh position={[0, 5, 0]}>
+                <cylinderGeometry args={[0.8, 0.8, 10, 32]} />
+                <meshStandardMaterial color={COLORS.pillar} roughness={0.2} />
+            </mesh>
+            <mesh position={[0, 0.5, 0]}>
+                <boxGeometry args={[2, 1, 2]} />
+                <meshStandardMaterial color={COLORS.gold} metalness={0.8} roughness={0.2} />
+            </mesh>
+            <mesh position={[0, 9.5, 0]}>
+                <boxGeometry args={[2, 1, 2]} />
+                <meshStandardMaterial color={COLORS.gold} metalness={0.8} roughness={0.2} />
+            </mesh>
+        </group>
     )
 }
 
 export function House(props) {
     return (
         <group {...props}>
-            {/* --- ENTRANCE HALL --- */}
-            {/* Floor */}
-            <Floor position={[0, 0.01, 5]} args={[10, 10]} color={COLORS.green5} />
+            {/* --- GRAND HALL --- */}
+            {/* Floor (40x60) */}
+            <Floor position={[0, 0.01, 0]} args={[40, 60]} color={COLORS.floor} />
+
+            {/* Ceiling */}
+            <mesh position={[0, 10, 0]} rotation={[Math.PI / 2, 0, 0]}>
+                <planeGeometry args={[40, 60]} />
+                <meshStandardMaterial color={COLORS.ceiling} side={DoubleSide} />
+            </mesh>
 
             {/* Walls */}
-            <Wall position={[-5, 2.5, 5]} args={[0.5, 5, 10]} color={COLORS.green1} /> {/* Left */}
-            <Wall position={[5, 2.5, 5]} args={[0.5, 5, 10]} color={COLORS.green1} /> {/* Right */}
-            <Wall position={[0, 2.5, 10]} args={[10, 5, 0.5]} color={COLORS.green1} /> {/* Front (Entrance) */}
+            <Wall position={[-20, 5, 0]} args={[1, 10, 60]} color={COLORS.wall} /> {/* Left */}
+            <Wall position={[20, 5, 0]} args={[1, 10, 60]} color={COLORS.wall} /> {/* Right */}
+            <Wall position={[0, 5, 30]} args={[40, 10, 1]} color={COLORS.wall} /> {/* Entrance Wall */}
+            <Wall position={[0, 5, -30]} args={[40, 10, 1]} color={COLORS.wall} /> {/* Back Wall (Throne) */}
 
-            {/* Doorway to Living Room */}
-            <Wall position={[-3.5, 2.5, 0]} args={[3, 5, 0.5]} color={COLORS.green1} />
-            <Wall position={[3.5, 2.5, 0]} args={[3, 5, 0.5]} color={COLORS.green1} />
-            <Wall position={[0, 4, 0]} args={[4, 2, 0.5]} color={COLORS.green1} />
-
-            {/* --- LIVING ROOM --- */}
-            {/* Floor */}
-            <Floor position={[0, 0.01, -5]} args={[20, 10]} color={COLORS.bg1} />
-
-            {/* Walls */}
-            <Wall position={[-10, 2.5, -5]} args={[0.5, 5, 10]} color={COLORS.white1} /> {/* Left */}
-            <Wall position={[10, 2.5, -5]} args={[0.5, 5, 10]} color={COLORS.white1} /> {/* Right */}
-            <Wall position={[0, 2.5, -10]} args={[20, 5, 0.5]} color={COLORS.white1} /> {/* Back */}
-
-            {/* Ceiling (for both) */}
-            <mesh position={[0, 5, 0]} rotation={[Math.PI / 2, 0, 0]}>
-                <planeGeometry args={[20, 20]} />
-                <meshStandardMaterial color={COLORS.green5} side={DoubleSide} />
-            </mesh>
-
-            {/* --- DECOR / FURNITURE --- */}
-            {/* Neon Light Strip */}
-            <mesh position={[0, 4.5, -9.9]}>
-                <boxGeometry args={[18, 0.1, 0.1]} />
-                <meshBasicMaterial color={COLORS.neon} />
-            </mesh>
-
-            {/* Table */}
-            <mesh position={[0, 1, -5]}>
-                <cylinderGeometry args={[2, 2, 0.2, 32]} />
-                <meshStandardMaterial color={COLORS.red1} />
-            </mesh>
-            <mesh position={[0, 0.5, -5]}>
-                <cylinderGeometry args={[0.2, 0.2, 1, 8]} />
+            {/* Entrance Doorway */}
+            <mesh position={[0, 3, 30.1]}>
+                <boxGeometry args={[8, 6, 0.5]} />
                 <meshStandardMaterial color="black" />
             </mesh>
 
-            {/* Art Piece */}
-            <mesh position={[-9.9, 2.5, -5]} rotation={[0, Math.PI / 2, 0]}>
-                <planeGeometry args={[3, 3]} />
-                <meshStandardMaterial color={COLORS.blue1} emissive={COLORS.blue1} emissiveIntensity={0.5} />
+            {/* Pillars (Rows) */}
+            {Array.from({ length: 6 }).map((_, i) => (
+                <React.Fragment key={i}>
+                    <Pillar position={[-12, 0, -20 + i * 8]} />
+                    <Pillar position={[12, 0, -20 + i * 8]} />
+                </React.Fragment>
+            ))}
+
+            {/* --- THRONE AREA --- */}
+            <group position={[0, 0, -25]}>
+                {/* Platform */}
+                <mesh position={[0, 1, 0]}>
+                    <boxGeometry args={[10, 2, 6]} />
+                    <meshStandardMaterial color={COLORS.red} />
+                </mesh>
+                {/* Steps */}
+                <mesh position={[0, 0.25, 4]}>
+                    <boxGeometry args={[10, 0.5, 2]} />
+                    <meshStandardMaterial color={COLORS.red} />
+                </mesh>
+
+                {/* Throne Chair */}
+                <mesh position={[0, 3, 0]}>
+                    <boxGeometry args={[2, 3, 2]} />
+                    <meshStandardMaterial color={COLORS.gold} metalness={1} roughness={0.1} />
+                </mesh>
+                <mesh position={[0, 4.5, -0.9]}>
+                    <boxGeometry args={[2, 4, 0.2]} />
+                    <meshStandardMaterial color={COLORS.gold} metalness={1} roughness={0.1} />
+                </mesh>
+            </group>
+
+            {/* --- DECOR --- */}
+            {/* Red Carpet */}
+            <mesh position={[0, 0.02, 5]} rotation={[-Math.PI / 2, 0, 0]}>
+                <planeGeometry args={[6, 45]} />
+                <meshStandardMaterial color={COLORS.red} />
             </mesh>
+
+            {/* Chandeliers / Lights */}
+            <pointLight position={[0, 8, 0]} intensity={0.8} distance={20} color={COLORS.gold} />
+            <pointLight position={[0, 8, 15]} intensity={0.8} distance={20} color={COLORS.gold} />
+            <pointLight position={[0, 8, -15]} intensity={0.8} distance={20} color={COLORS.gold} />
 
         </group>
     );
