@@ -159,25 +159,37 @@ export const InteractiveDoor = ({
     const [isNearby, setIsNearby] = useState(false);
     const doorRef = useRef();
     const groupRef = useRef();
-    const { camera } = useThree();
+    const doorMeshRef = useRef();
+    const { camera, raycaster, scene } = useThree();
     const [, getKeys] = useKeyboardControls();
     const lastInteract = useRef(false);
 
-    // Check proximity and handle E key
+    // Check proximity, look direction, and handle E key
     useFrame(() => {
-        if (!groupRef.current) return;
+        if (!groupRef.current || !doorMeshRef.current) return;
 
         const doorPos = groupRef.current.getWorldPosition(new THREE.Vector3());
         const distance = camera.position.distanceTo(doorPos);
 
+        // Check if player is nearby
+        const isClose = distance < interactionDistance;
+
+        // Check if player is looking at the door (raycast from camera center)
+        let isLookingAtDoor = false;
+        if (isClose) {
+            raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+            const intersects = raycaster.intersectObject(doorMeshRef.current, true);
+            isLookingAtDoor = intersects.length > 0;
+        }
+
         const wasNearby = isNearby;
-        const nowNearby = distance < interactionDistance;
+        const nowNearby = isClose && isLookingAtDoor;
 
         if (nowNearby !== wasNearby) {
             setIsNearby(nowNearby);
         }
 
-        // Handle E key press
+        // Handle E key press - only when looking at door
         const { interact } = getKeys();
         if (nowNearby && interact && !lastInteract.current) {
             setIsOpen(prev => !prev);
@@ -208,7 +220,7 @@ export const InteractiveDoor = ({
 
             {/* Door panel (rotates from hinge side) */}
             <group ref={doorRef} position={[-width / 2, 0, 0]}>
-                <Box args={[width, height, depth]} position={[width / 2, 0, 0]} castShadow>
+                <Box ref={doorMeshRef} args={[width, height, depth]} position={[width / 2, 0, 0]} castShadow>
                     <meshStandardMaterial color={color} roughness={0.5} />
                 </Box>
                 {/* Door knob */}

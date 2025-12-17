@@ -7,7 +7,7 @@ import * as THREE from 'three';
 const SPEED = 6;
 const SPRINT_SPEED = 10;
 const JUMP_FORCE = 6;
-const PLAYER_HEIGHT = 1.7;
+const PLAYER_HEIGHT = 1.0;
 
 export function Player(props) {
     const { camera } = useThree();
@@ -15,10 +15,10 @@ export function Player(props) {
     const rigidBody = useRef();
     const { rapier, world } = useRapier();
     const isGrounded = useRef(false);
-    
+
     // For head bob effect
     const bobPhase = useRef(0);
-    
+
     // Raycaster for ground detection
     const rapierRay = useRef(new rapier.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: -1, z: 0 }));
 
@@ -87,7 +87,7 @@ export function Player(props) {
             linearDamping={0.5}
             angularDamping={1}
         >
-            <CapsuleCollider args={[0.5, 0.5]} />
+            <CapsuleCollider args={[0.35, 0.35]} />
             <PointerLockControls />
         </RigidBody>
     );
