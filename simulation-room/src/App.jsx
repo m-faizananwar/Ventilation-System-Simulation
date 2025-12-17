@@ -4,133 +4,33 @@ import { Environment, KeyboardControls } from '@react-three/drei';
 import { House } from './House';
 import { World } from './World';
 import { Player } from './Player';
-import { Overlay } from './Overlay';
+// Overlay removed
 import './App.css';
 import { Physics } from '@react-three/rapier';
 
-// Realistic fog simulation component
-function FogSimulation({ fogIntensity, setFogIntensity, setSensors, setFanOn, fanOn, appliances }) {
-    useFrame((state, delta) => {
-        let newFog = fogIntensity;
-        let pollutionRate = 0;
-
-        // Calculate pollution input from appliances
-        if (appliances.hearth) pollutionRate += 0.3; // Hearth adds significant smoke
-        if (appliances.heater) pollutionRate += 0.05; // Heater adds minor CO2/heat (simulated as fog for now)
-
-        if (pollutionRate > 0) {
-            // Pollution rises
-            newFog += pollutionRate * delta;
-        }
-
-        if (fanOn) {
-            // Fans clear fog at realistic rate (15% per second)
-            newFog -= 0.15 * delta;
-        } else {
-            // Natural slow dissipation (2% per second)
-            newFog -= 0.02 * delta;
-        }
-
-        // Clamp fog intensity
-        newFog = Math.max(0, Math.min(1, newFog));
-
-        if (Math.abs(newFog - fogIntensity) > 0.001) {
-            setFogIntensity(newFog);
-        }
-
-        // Realistic sensor calculations
-        // CO2: Normal is 400ppm, dangerous is 1200+ppm
-        const co2 = 400 + (newFog * 850); // 400-1250 ppm range
-
-        // PM2.5: Safe is <35, unhealthy is >75 µg/m³
-        const pm25 = 10 + (newFog * 150); // 10-160 µg/m³ range
-
-        // AQI: Good is 0-50, moderate 51-100, unhealthy 101-150, very unhealthy 151+
-        const smog = newFog * 300; // 0-300 AQI range
-
-        setSensors({ co2, pm25, smog });
-
-        // Automatic fan control based on thresholds
-        // Turn ON if CO2 > 800 OR PM2.5 > 50 OR AQI > 100
-        // Turn OFF if all values are safe: CO2 < 500 AND PM2.5 < 25 AND AQI < 40
-        if (!fanOn && (co2 > 800 || pm25 > 50 || smog > 100)) {
-            setFanOn(true);
-        } else if (fanOn && co2 < 500 && pm25 < 25 && smog < 40) {
-            setFanOn(false);
-        }
-    });
-
-    return null;
-}
+// FogSimulation removed
 
 function App() {
-    const [fogIntensity, setFogIntensity] = useState(0);
-    const [fanOn, setFanOn] = useState(false);
-    const [sensors, setSensors] = useState({ co2: 400, pm25: 10, smog: 0 });
-    const [isInstructionsVisible, setInstructionsVisible] = useState(true);
-    const [appliances, setAppliances] = useState({ hearth: false, heater: false });
-
-    // Handle crosshair visibility (only when instructions are hidden)
-    const [showCrosshair, setShowCrosshair] = useState(false);
+    // Simulation state removed (fog, sensors, appliances)
+    // All UI states removed
+    // const [isInstructionsVisible, setInstructionsVisible] = useState(true);
+    // const [showCrosshair, setShowCrosshair] = useState(false);
 
     const handleSimulateFog = () => {
         setFogIntensity(1.0); // Maximum pollution
     };
 
     const handleStartSimulation = () => {
-        setInstructionsVisible(false);
-        setShowCrosshair(true);
         // Pointer lock will be handled by clicking on canvas
     };
 
-    const toggleAppliance = (name) => {
-        setAppliances(prev => ({
-            ...prev,
-            [name]: !prev[name]
-        }));
-    };
+    // toggleAppliance removed
 
     return (
         <>
-            <Overlay
-                fogIntensity={fogIntensity}
-                sensors={sensors}
-                fanOn={fanOn}
-                onToggleFog={handleSimulateFog}
-            />
+            {/* Overlay removed */}
 
-            {/* Crosshair for Interaction */}
-            {showCrosshair && (
-                <div style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    width: '20px',
-                    height: '20px',
-                    transform: 'translate(-50%, -50%)',
-                    pointerEvents: 'none',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        position: 'absolute',
-                        top: '9px',
-                        left: '0',
-                        width: '20px',
-                        height: '2px',
-                        backgroundColor: 'white',
-                        boxShadow: '0 0 2px black'
-                    }} />
-                    <div style={{
-                        position: 'absolute',
-                        top: '0',
-                        left: '9px',
-                        width: '2px',
-                        height: '20px',
-                        backgroundColor: 'white',
-                        boxShadow: '0 0 2px black'
-                    }} />
-                </div>
-            )}
+            {/* Crosshair removed */}
 
             <KeyboardControls
                 map={[
@@ -150,26 +50,7 @@ function App() {
                     >
                         <color attach="background" args={['#87CEEB']} />
 
-                        <FogSimulation
-                            fogIntensity={fogIntensity}
-                            setFogIntensity={setFogIntensity}
-                            setSensors={setSensors}
-                            setFanOn={setFanOn}
-                            fanOn={fanOn}
-                            appliances={appliances}
-                        />
-
-                        {/* Realistic Volumetric Fog - Updated Colors for Smoke */}
-                        {fogIntensity > 0.01 && (
-                            <fog
-                                attach="fog"
-                                args={[
-                                    appliances.hearth ? '#555555' : '#CCCCCC', // Darker fog if Hearth is on (smoke)
-                                    2, // Near distance
-                                    30 - (fogIntensity * 20) // Far distance (closer when more fog)
-                                ]}
-                            />
-                        )}
+                        {/* Fog removed */}
 
                         {/* Essential Lighting */}
                         <ambientLight intensity={0.6} />
@@ -190,13 +71,7 @@ function App() {
                         <Suspense fallback={null}>
                             <Physics gravity={[0, -9.81, 0]}>
                                 <World />
-                                <House
-                                    position={[0, 0, 0]}
-                                    fanOn={fanOn}
-                                    sensors={sensors}
-                                    appliances={appliances}
-                                    onToggleAppliance={toggleAppliance}
-                                />
+                                <House position={[0, 0, 0]} />
                                 <Player />
                             </Physics>
 
@@ -206,98 +81,18 @@ function App() {
                 </div>
             </KeyboardControls>
 
-            {/* Instructions Overlay - Outside Canvas */}
-            {isInstructionsVisible && (
-                <div
-                    onClick={handleStartSimulation}
-                    style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        background: 'rgba(0, 0, 0, 0.9)',
-                        color: 'white',
-                        padding: '40px',
-                        borderRadius: '20px',
-                        fontFamily: 'Arial, sans-serif',
-                        textAlign: 'center',
-                        cursor: 'pointer',
-                        zIndex: 2000,
-                        maxWidth: '500px',
-                        boxShadow: '0 10px 50px rgba(0, 0, 0, 0.8)',
-                        border: '2px solid rgba(255, 255, 255, 0.2)'
-                    }}
-                >
-                    <h1 style={{
-                        margin: '0 0 30px 0',
-                        fontSize: '2em',
-                        background: 'linear-gradient(90deg, #4AF, #F4A)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent'
-                    }}>
-                        🏠 Smart Home Air Quality System
-                    </h1>
-
-                    <div style={{
-                        textAlign: 'left',
-                        marginBottom: '30px',
-                        fontSize: '1.1em',
-                        lineHeight: '1.8'
-                    }}>
-                        <div style={{ marginBottom: '15px' }}>
-                            <strong>🎮 Controls:</strong>
-                        </div>
-                        <div style={{ marginLeft: '20px', color: '#CCC' }}>
-                            <div>• <strong>WASD / Arrow Keys</strong> - Move</div>
-                            <div>• <strong>Mouse</strong> - Look around</div>
-                            <div>• <strong>Click</strong> - Interact with Appliances (Hearth/Heater)</div>
-                            <div>• <strong>SPACE</strong> - Jump</div>
-                            <div>• <strong>SHIFT</strong> - Sprint</div>
-                        </div>
-
-                        <div style={{ marginTop: '20px', marginBottom: '15px' }}>
-                            <strong>🌫️ Simulation:</strong>
-                        </div>
-                        <div style={{ marginLeft: '20px', color: '#CCC' }}>
-                            <div>• Turn on the <strong>Hearth</strong> or <strong>Heater</strong> to generate pollution.</div>
-                            <div>• Watch <strong>Smoke/CO2</strong> levels rise.</div>
-                            <div>• See <strong>Fans</strong> activate automatically.</div>
-                        </div>
-                    </div>
-
-                    <div style={{
-                        padding: '15px',
-                        background: 'linear-gradient(135deg, #4488FF, #0044CC)',
-                        borderRadius: '10px',
-                        fontWeight: 'bold',
-                        fontSize: '1.2em',
-                        marginTop: '20px'
-                    }}>
-                        CLICK TO START
-                    </div>
-                </div>
-            )}
-
-            {!isInstructionsVisible && (
-                <div style={{
-                    position: 'absolute',
-                    bottom: '80px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: 'rgba(0, 0, 0, 0.7)',
-                    color: 'white',
-                    padding: '12px 24px',
-                    borderRadius: '25px',
-                    fontFamily: 'Arial, sans-serif',
-                    fontSize: '0.95em',
-                    pointerEvents: 'none',
-                    zIndex: 100,
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    backdropFilter: 'blur(10px)'
-                }}>
-                    WASD - Move | Mouse - Look | Click - Interact | ESC - Release Mouse
-                </div>
-            )}
+            {/* Instructions Overlay Removed */}
+            <div style={{
+                position: 'absolute',
+                top: '20px',
+                left: '20px',
+                color: 'white',
+                background: 'rgba(0,0,0,0.5)',
+                padding: '10px',
+                borderRadius: '5px'
+            }}>
+                Click to Start | WASD to Move
+            </div>
         </>
     );
 }
