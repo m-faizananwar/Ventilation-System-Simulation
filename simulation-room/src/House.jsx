@@ -956,28 +956,20 @@ function Basement() {
 const Exterior = () => {
     return (
         <group>
-            {/* Driveway - Curved path from Gate (z=15) to Garage */}
+            {/* ============ SYMMETRIC PATHWAYS ============ */}
             <RigidBody type="fixed">
-                <Box args={[6, 0.1, 20]} position={[-5, -0.05, 7.5]} receiveShadow>
-                    <meshStandardMaterial color="#4A4A4A" roughness={0.9} />
+                {/* Main walkway - centered, leading to front porch */}
+                <Box args={[4, 0.1, 12]} position={[0, -0.05, 12]} receiveShadow>
+                    <meshStandardMaterial color="#555555" roughness={0.9} />
                 </Box>
-                {/* Garage ramp down */}
-                <mesh position={[-5, -1.5, -2]} rotation={[0.3, 0, 0]}>
-                    <boxGeometry args={[6, 0.1, 5]} />
-                    <meshStandardMaterial color="#4A4A4A" roughness={0.9} />
-                </mesh>
+
+                {/* Porch connection - widens at the porch */}
+                <Box args={[6, 0.1, 4]} position={[0, -0.05, 7.5]} receiveShadow>
+                    <meshStandardMaterial color="#555555" roughness={0.9} />
+                </Box>
             </RigidBody>
 
-            {/* Main Gate (z=15) */}
-            <group position={[0, 0, 17]}>
-                <Wall position={[-5, 1, 0]} args={[1, 2, 1]} color="#555555" />
-                <Wall position={[5, 1, 0]} args={[1, 2, 1]} color="#555555" />
-                <RigidBody type="fixed">
-                    <Box args={[8, 2, 0.2]} position={[0, 1, 0]}>
-                        <meshStandardMaterial color="#222222" metalness={0.6} />
-                    </Box>
-                </RigidBody>
-            </group>
+            {/* Gate posts removed for cleaner entrance */}
 
             {/* ============ FRONT PORCH ============ */}
             <group position={[0, 0, 6]}>
@@ -1020,23 +1012,7 @@ const Exterior = () => {
                 <pointLight position={[0, 2.5, 0]} intensity={1} distance={8} color="#FFF8DC" />
             </group>
 
-            {/* Front Lawn - with Oak trees */}
-            <group position={[8, 0, 10]}>
-                {/* Path lights */}
-                {[0, 2, 4, 6].map((z, i) => (
-                    <group key={i} position={[-4, 0, z]}>
-                        <mesh position={[0, 0.4, 0]}>
-                            <cylinderGeometry args={[0.05, 0.08, 0.8, 8]} />
-                            <meshStandardMaterial color="#333" />
-                        </mesh>
-                        <mesh position={[0, 0.85, 0]}>
-                            <sphereGeometry args={[0.1, 8, 8]} />
-                            <meshStandardMaterial color="#FFFFEE" emissive="#FFFF88" emissiveIntensity={0.5} />
-                        </mesh>
-                        <pointLight position={[0, 0.9, 0]} intensity={0.3} distance={4} color="#FFF8DC" />
-                    </group>
-                ))}
-            </group>
+            {/* Front Lawn - path lights removed for cleaner look */}
 
             {/* Backyard */}
             <group position={[0, 0, -15]}>
