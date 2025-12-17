@@ -603,7 +603,7 @@ function GroundFloor() {
     return (
         <group position={[0, 0, 0]}>
             {/* FLOOR */}
-            <Floor position={[0, -0.1, -2.5]} args={[20, 15]} />
+            <Floor position={[0, 0.05, -2.5]} args={[20, 15]} />
 
             {/* === FOYER (Center Front) === */}
             {/* Front wall - LEFT section (from x=-10 to x=-1, leaving 2m gap for door) */}
@@ -735,7 +735,7 @@ function FirstFloor() {
     return (
         <group position={[0, 3.8, 0]}>
             {/* Floor */}
-            <Floor position={[0, -0.1, -2.5]} args={[20, 15]} color="#B8860B" />
+            <Floor position={[0, 0.05, -2.5]} args={[20, 15]} color="#B8860B" />
 
             {/* Exterior Walls */}
             <Wall position={[0, 1.75, 5]} args={[20, 3.5, 0.2]} />
@@ -798,7 +798,7 @@ function FirstFloor() {
             <Bookshelf position={[-9.5, 0, 3]} rotation={[0, Math.PI / 2, 0]} />
 
             {/* Landing / Hallway area - Stair opening */}
-            <Floor position={[-4, -0.1, 3]} args={[2, 4]} color="#555" />
+            <Floor position={[-4, 0.05, 3]} args={[2, 4]} color="#555" />
 
             {/* Balcony (Outside Master Bedroom) */}
             <RigidBody type="fixed">
@@ -877,7 +877,7 @@ function FirstFloor() {
 function Basement() {
     return (
         <group position={[0, -3.5, 0]}>
-            <Floor position={[0, -0.1, -2.5]} args={[20, 15]} color="#555555" />
+            <Floor position={[0, 0.05, -2.5]} args={[20, 15]} color="#555555" />
 
             {/* Walls */}
             <Wall position={[0, 1.75, 5]} args={[20, 3.5, 0.2]} color="#444444" />
@@ -959,12 +959,12 @@ const Exterior = () => {
             {/* ============ SYMMETRIC PATHWAYS ============ */}
             <RigidBody type="fixed">
                 {/* Main walkway - centered, leading to front porch */}
-                <Box args={[4, 0.1, 12]} position={[0, -0.05, 12]} receiveShadow>
+                <Box args={[4, 0.1, 12]} position={[0, 0.06, 12]} receiveShadow>
                     <meshStandardMaterial color="#555555" roughness={0.9} />
                 </Box>
 
                 {/* Porch connection - widens at the porch */}
-                <Box args={[6, 0.1, 4]} position={[0, -0.05, 7.5]} receiveShadow>
+                <Box args={[6, 0.1, 4]} position={[0, 0.06, 7.5]} receiveShadow>
                     <meshStandardMaterial color="#555555" roughness={0.9} />
                 </Box>
             </RigidBody>
