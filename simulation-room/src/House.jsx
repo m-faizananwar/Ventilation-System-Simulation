@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { RigidBody } from '@react-three/rapier';
 import { Fan } from './Fan';
 import { Sensor } from './Sensor';
+import { Hearth, Heater } from './Appliances';
 import * as THREE from 'three';
 
 const MATERIALS = {
@@ -17,7 +18,7 @@ const MATERIALS = {
         roughness: 0.6,
         metalness: 0.05,
     }),
-    
+
     // Wall materials
     wallWhite: new THREE.MeshStandardMaterial({
         color: '#F5F5F5',
@@ -29,14 +30,14 @@ const MATERIALS = {
         roughness: 0.85,
         metalness: 0.0,
     }),
-    
+
     // Ceiling
     ceiling: new THREE.MeshStandardMaterial({
         color: '#FAFAFA',
         roughness: 0.95,
         metalness: 0.0,
     }),
-    
+
     // Glass
     glass: new THREE.MeshPhysicalMaterial({
         color: '#ADD8E6',
@@ -47,14 +48,14 @@ const MATERIALS = {
         transmission: 0.9,
         thickness: 0.5,
     }),
-    
+
     // Metal
     metal: new THREE.MeshStandardMaterial({
         color: '#8C8C8C',
         roughness: 0.3,
         metalness: 0.9,
     }),
-    
+
     // Fabrics
     fabricGray: new THREE.MeshStandardMaterial({
         color: '#696969',
@@ -71,21 +72,21 @@ const MATERIALS = {
         roughness: 0.9,
         metalness: 0.0,
     }),
-    
+
     // Marble
     marble: new THREE.MeshStandardMaterial({
         color: '#F0F0F0',
         roughness: 0.2,
         metalness: 0.1,
     }),
-    
+
     // Carpet
     carpet: new THREE.MeshStandardMaterial({
         color: '#8B7355',
         roughness: 1.0,
         metalness: 0.0,
     }),
-    
+
     // Door
     door: new THREE.MeshStandardMaterial({
         color: '#654321',
@@ -140,9 +141,9 @@ function Door({ position, rotation = [0, 0, 0], open = false }) {
                 <boxGeometry args={[1.2, 4, 0.2]} />
             </mesh>
             {/* Door Panel */}
-            <mesh 
-                position={[open ? 0.5 : 0, 2, 0.1]} 
-                rotation={[0, open ? Math.PI / 2 : 0, 0]} 
+            <mesh
+                position={[open ? 0.5 : 0, 2, 0.1]}
+                rotation={[0, open ? Math.PI / 2 : 0, 0]}
                 material={MATERIALS.door}
                 castShadow
             >
@@ -281,8 +282,8 @@ function Bookshelf({ position }) {
             ))}
             {/* Books */}
             {Array.from({ length: 15 }).map((_, i) => (
-                <mesh 
-                    key={i} 
+                <mesh
+                    key={i}
                     position={[
                         -0.8 + (i % 5) * 0.4,
                         -0.7 + Math.floor(i / 5) * 1,
@@ -380,7 +381,7 @@ function Rug({ position, size = [4, 3] }) {
     );
 }
 
-export function House({ fanOn, sensors, ...props }) {
+export function House({ fanOn, sensors, appliances, onToggleAppliance, ...props }) {
     return (
         <group {...props}>
             <RigidBody type="fixed" colliders="cuboid">
@@ -388,7 +389,7 @@ export function House({ fanOn, sensors, ...props }) {
                 <group position={[0, 0, 0]}>
                     {/* Floor */}
                     <Floor position={[0, 0.01, 0]} args={[20, 20]} material={MATERIALS.floorWood} />
-                    
+
                     {/* Ceiling */}
                     <mesh position={[0, 5, 0]} rotation={[Math.PI / 2, 0, 0]} material={MATERIALS.ceiling} receiveShadow>
                         <planeGeometry args={[20, 20]} />
@@ -398,12 +399,12 @@ export function House({ fanOn, sensors, ...props }) {
                     <Wall position={[-10, 2.5, 0]} args={[0.3, 5, 20]} material={MATERIALS.wallWhite} />
                     <Wall position={[10, 2.5, 0]} args={[0.3, 5, 20]} material={MATERIALS.wallWhite} />
                     <Wall position={[0, 2.5, -10]} args={[20, 5, 0.3]} material={MATERIALS.wallWhite} />
-                    
+
                     {/* Front Wall with Door Opening */}
                     <Wall position={[-6, 2.5, 10]} args={[8, 5, 0.3]} material={MATERIALS.wallAccent} />
                     <Wall position={[6, 2.5, 10]} args={[8, 5, 0.3]} material={MATERIALS.wallAccent} />
                     <Wall position={[0, 4.2, 10]} args={[4, 1.6, 0.3]} material={MATERIALS.wallAccent} />
-                    
+
                     {/* Interior Walls */}
                     <Wall position={[0, 2.5, 0]} args={[0.3, 5, 10]} material={MATERIALS.wallWhite} /> {/* Living/Kitchen Divider */}
                     <Wall position={[-5, 2.5, 5]} args={[10, 5, 0.3]} material={MATERIALS.wallWhite} /> {/* Bedroom Wall */}
@@ -416,7 +417,7 @@ export function House({ fanOn, sensors, ...props }) {
                 <Door position={[0, 0, 10]} open={true} />
                 <Window position={[-7, 2.5, 10]} />
                 <Window position={[7, 2.5, 10]} />
-                
+
                 {/* ================= LIVING ROOM ================= */}
                 <Rug position={[-3, 0.02, 0]} size={[6, 5]} />
                 <Sofa position={[-4, 0, -2]} rotation={[0, Math.PI / 2, 0]} />
@@ -424,37 +425,54 @@ export function House({ fanOn, sensors, ...props }) {
                 <TVStand position={[-7, 0, 0]} />
                 <Lamp position={[-1, 0, -3]} />
                 <Lamp position={[-7, 0, -3]} />
-                
+
                 {/* ================= DINING AREA ================= */}
                 <DiningTable position={[3, 0, -5]} />
                 <Chair position={[1.5, 0, -5]} rotation={[0, Math.PI / 2, 0]} />
                 <Chair position={[4.5, 0, -5]} rotation={[0, -Math.PI / 2, 0]} />
                 <Chair position={[3, 0, -6.2]} />
                 <Chair position={[3, 0, -3.8]} rotation={[0, Math.PI, 0]} />
-                
+
                 {/* ================= KITCHEN ================= */}
                 <KitchenCounter position={[5, 0, 5]} />
-                
+
                 {/* ================= BEDROOM ================= */}
                 <Bed position={[-5, 0, 7]} rotation={[0, -Math.PI / 2, 0]} />
                 <Bookshelf position={[-8, 1.5, 7]} />
                 <Lamp position={[-3, 0, 8.5]} />
-                
+
                 {/* Windows */}
                 <Window position={[-10, 2.5, -5]} rotation={[0, Math.PI / 2, 0]} />
                 <Window position={[-10, 2.5, 5]} rotation={[0, Math.PI / 2, 0]} />
                 <Window position={[10, 2.5, -5]} rotation={[0, -Math.PI / 2, 0]} />
                 <Window position={[10, 2.5, 5]} rotation={[0, -Math.PI / 2, 0]} />
-                
+
                 {/* ================= VENTILATION SYSTEM ================= */}
                 <Fan position={[8, 4.5, 8]} rotation={[0, -Math.PI / 2, 0]} isOn={fanOn} />
                 <Fan position={[-8, 4.5, -8]} rotation={[0, Math.PI / 2, 0]} isOn={fanOn} />
                 <Fan position={[0, 4.8, 0]} rotation={[Math.PI / 2, 0, 0]} isOn={fanOn} />
-                
+
                 {/* ================= SENSORS ================= */}
                 <Sensor position={[-9.7, 2.5, -7]} rotation={[0, Math.PI / 2, 0]} type="co2" value={sensors.co2} label="CO2" />
                 <Sensor position={[-9.7, 2.5, -5]} rotation={[0, Math.PI / 2, 0]} type="pm25" value={sensors.pm25} label="PM2.5" />
                 <Sensor position={[-9.7, 2.5, -3]} rotation={[0, Math.PI / 2, 0]} type="smog" value={sensors.smog} label="Smog" />
+
+                {/* ================= APPLIANCES ================= */}
+                {/* Hearth in Living Room (replaces TV Stand or placed against wall) */}
+                <Hearth
+                    position={[-9, 0, 0]}
+                    rotation={[0, Math.PI / 2, 0]}
+                    active={appliances.hearth}
+                    onToggle={() => onToggleAppliance('hearth')}
+                />
+
+                {/* Heater in Bedroom */}
+                <Heater
+                    position={[-3, 0, 4]}
+                    rotation={[0, -Math.PI / 4, 0]}
+                    active={appliances.heater}
+                    onToggle={() => onToggleAppliance('heater')}
+                />
             </group>
         </group>
     );
