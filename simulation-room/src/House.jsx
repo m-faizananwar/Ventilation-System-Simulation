@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wall, Floor, Door, GlassWindow, CeilingLight, FLOOR_COLORS } from './HouseStructure';
+import { Wall, Floor, Door, GlassWindow, CeilingLight, FLOOR_COLORS, InteractiveDoor } from './HouseStructure';
 import { Box, Cylinder } from '@react-three/drei';
 import { RigidBody } from '@react-three/rapier';
 
@@ -610,10 +610,10 @@ function GroundFloor() {
             <Wall position={[-5.5, 1.75, 5]} args={[9, 3.5, 0.2]} />
             {/* Front wall - RIGHT section (from x=1 to x=10, leaving 2m gap for door) */}
             <Wall position={[5.5, 1.75, 5]} args={[9, 3.5, 0.2]} />
-            {/* Door visual (no collision - player can walk through) */}
-            <Door position={[0, 1.1, 5]} args={[2, 2.2, 0.1]} color="#4A3728" />
+            {/* MAIN ENTRANCE - Interactive Door (taller, opens with E key) */}
+            <InteractiveDoor position={[0, 1.6, 5]} args={[2.4, 3.2, 0.12]} color="#4A3728" interactionDistance={4} />
             {/* Wall above door */}
-            <Wall position={[0, 2.85, 5]} args={[2, 1.3, 0.2]} />
+            <Wall position={[0, 3.45, 5]} args={[2.6, 0.6, 0.2]} />
 
             {/* Foyer Furniture */}
             <ShoeRack position={[2.5, 0, 4]} />

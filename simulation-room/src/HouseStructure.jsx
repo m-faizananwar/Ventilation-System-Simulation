@@ -138,6 +138,127 @@ export const Door = ({
     );
 };
 
+// Interactive Door - with open/close animation and E key interaction
+import { useFrame, useThree } from '@react-three/fiber';
+import { useKeyboardControls } from '@react-three/drei';
+import { useState, useRef, useEffect } from 'react';
+import * as THREE from 'three';
+
+export const InteractiveDoor = ({
+    position,
+    args = [2, 2.8, 0.1], // Bigger door by default
+    color = '#6B4423',
+    frameColor = TRIM_COLOR,
+    interactionDistance = 3,
+    onOpenChange,
+}) => {
+    const [width, height, depth] = args;
+    const frameWidth = 0.1;
+    const [isOpen, setIsOpen] = useState(false);
+    const [isNearby, setIsNearby] = useState(false);
+    const doorRef = useRef();
+    const groupRef = useRef();
+    const { camera } = useThree();
+    const [, getKeys] = useKeyboardControls();
+    const lastInteract = useRef(false);
+
+    // Check proximity and handle E key
+    useFrame(() => {
+        if (!groupRef.current) return;
+
+        const doorPos = groupRef.current.getWorldPosition(new THREE.Vector3());
+        const distance = camera.position.distanceTo(doorPos);
+
+        const wasNearby = isNearby;
+        const nowNearby = distance < interactionDistance;
+
+        if (nowNearby !== wasNearby) {
+            setIsNearby(nowNearby);
+        }
+
+        // Handle E key press
+        const { interact } = getKeys();
+        if (nowNearby && interact && !lastInteract.current) {
+            setIsOpen(prev => !prev);
+            if (onOpenChange) onOpenChange(!isOpen);
+        }
+        lastInteract.current = interact;
+    });
+
+    // Animate door rotation
+    useFrame((_, delta) => {
+        if (!doorRef.current) return;
+        const targetRotation = isOpen ? -Math.PI / 2 : 0;
+        doorRef.current.rotation.y += (targetRotation - doorRef.current.rotation.y) * delta * 5;
+    });
+
+    return (
+        <group ref={groupRef} position={position}>
+            {/* Door frame (stays fixed) */}
+            <Box args={[width + frameWidth * 2 + 0.2, frameWidth * 1.5, depth + 0.1]} position={[0, height / 2 + frameWidth / 2, 0]}>
+                <meshStandardMaterial color={frameColor} roughness={0.4} />
+            </Box>
+            <Box args={[frameWidth, height, depth + 0.1]} position={[-width / 2 - frameWidth / 2, 0, 0]}>
+                <meshStandardMaterial color={frameColor} roughness={0.4} />
+            </Box>
+            <Box args={[frameWidth, height, depth + 0.1]} position={[width / 2 + frameWidth / 2, 0, 0]}>
+                <meshStandardMaterial color={frameColor} roughness={0.4} />
+            </Box>
+
+            {/* Door panel (rotates from hinge side) */}
+            <group ref={doorRef} position={[-width / 2, 0, 0]}>
+                <Box args={[width, height, depth]} position={[width / 2, 0, 0]} castShadow>
+                    <meshStandardMaterial color={color} roughness={0.5} />
+                </Box>
+                {/* Door knob */}
+                <mesh position={[width - 0.15, 0, depth / 2 + 0.03]}>
+                    <sphereGeometry args={[0.06, 16, 16]} />
+                    <meshStandardMaterial color="#B8860B" metalness={0.8} roughness={0.2} />
+                </mesh>
+                {/* Knob on other side */}
+                <mesh position={[width - 0.15, 0, -depth / 2 - 0.03]}>
+                    <sphereGeometry args={[0.06, 16, 16]} />
+                    <meshStandardMaterial color="#B8860B" metalness={0.8} roughness={0.2} />
+                </mesh>
+                {/* Decorative panels */}
+                <Box args={[width * 0.4, height * 0.28, 0.02]} position={[width * 0.3, height * 0.22, depth / 2 + 0.01]}>
+                    <meshStandardMaterial color={color} roughness={0.4} />
+                </Box>
+                <Box args={[width * 0.4, height * 0.28, 0.02]} position={[width * 0.7, height * 0.22, depth / 2 + 0.01]}>
+                    <meshStandardMaterial color={color} roughness={0.4} />
+                </Box>
+                <Box args={[width * 0.4, height * 0.28, 0.02]} position={[width * 0.3, -height * 0.18, depth / 2 + 0.01]}>
+                    <meshStandardMaterial color={color} roughness={0.4} />
+                </Box>
+                <Box args={[width * 0.4, height * 0.28, 0.02]} position={[width * 0.7, -height * 0.18, depth / 2 + 0.01]}>
+                    <meshStandardMaterial color={color} roughness={0.4} />
+                </Box>
+            </group>
+
+            {/* Proximity indicator (shows tooltip externally via context) */}
+            <ProximityTooltip isNearby={isNearby} isOpen={isOpen} />
+        </group>
+    );
+};
+
+// Helper component to show tooltip
+const ProximityTooltip = ({ isNearby, isOpen }) => {
+    useEffect(() => {
+        // We need to communicate with App.jsx - using window for simplicity
+        if (isNearby) {
+            window.dispatchEvent(new CustomEvent('showInteractionTooltip', {
+                detail: { show: true, text: isOpen ? 'Press E to close door' : 'Press E to open door' }
+            }));
+        } else {
+            window.dispatchEvent(new CustomEvent('showInteractionTooltip', {
+                detail: { show: false, text: '' }
+            }));
+        }
+    }, [isNearby, isOpen]);
+
+    return null;
+};
+
 // Window with Frame - glass + white trim
 export const GlassWindow = ({ position, args, frameColor = TRIM_COLOR }) => {
     const [width, height, depth] = args;
