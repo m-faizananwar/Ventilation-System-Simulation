@@ -869,13 +869,14 @@ function GroundFloor() {
     return (
         <group position={[0, 0, 0]}>
             {/* FLOOR */}
-            <Floor position={[0, 0.05, -2.5]} args={[20, 15]} />
+            {/* FLOOR - expanded to 36m width */}
+            <Floor position={[0, 0.05, -2.5]} args={[36, 15]} />
 
             {/* === FOYER (Center Front) === */}
-            {/* Front wall - LEFT section (from x=-10 to x=-1, leaving 2m gap for door) */}
-            <Wall position={[-5.5, 1.75, 5]} args={[9, 3.5, 0.2]} />
-            {/* Front wall - RIGHT section (from x=1 to x=10, leaving 2m gap for door) */}
-            <Wall position={[5.5, 1.75, 5]} args={[9, 3.5, 0.2]} />
+            {/* Front wall - LEFT section (width 16.8, pos -9.6) */}
+            <Wall position={[-9.6, 1.75, 5]} args={[16.8, 3.5, 0.2]} />
+            {/* Front wall - RIGHT section (width 16.8, pos 9.6) */}
+            <Wall position={[9.6, 1.75, 5]} args={[16.8, 3.5, 0.2]} />
             {/* MAIN ENTRANCE - Interactive Door (taller, opens with E key) */}
             <InteractiveDoor position={[0, 1.6, 5]} args={[2.4, 3.2, 0.12]} color="#4A3728" interactionDistance={4} />
             {/* Wall above door */}
@@ -885,17 +886,17 @@ function GroundFloor() {
             <Rug position={[0, 0.01, 4]} args={[1.5, 0.02, 1]} color="#553322" />
 
             {/* === LIVING ROOM (Center) === */}
-            {/* East wall (to Guest Bedroom) - door at z=2 */}
-            <Wall position={[4, 1.75, -4.6]} args={[0.2, 3.5, 10.8]} />   {/* Back section */}
-            <Wall position={[4, 1.75, 4.1]} args={[0.2, 3.5, 1.8]} />     {/* Front section */}
-            <Wall position={[4, 3.3, 2]} args={[0.2, 0.4, 2.5]} />        {/* Above door */}
-            <InteractiveDoor position={[4, 1.5, 2]} rotation={[0, Math.PI / 2, 0]} args={[2.5, 3, 0.12]} color="#4A3728" interactionDistance={3} />
+            {/* East wall (to Guest Bedroom) - moved out to x=6 to restore lounge size */}
+            <Wall position={[6, 1.75, -4.6]} args={[0.2, 3.5, 10.8]} />   {/* Back section */}
+            <Wall position={[6, 1.75, 4.1]} args={[0.2, 3.5, 1.8]} />     {/* Front section */}
+            <Wall position={[6, 3.3, 2]} args={[0.2, 0.4, 2.5]} />        {/* Above door */}
+            <InteractiveDoor position={[6, 1.5, 2]} rotation={[0, Math.PI / 2, 0]} args={[2.5, 3, 0.12]} color="#4A3728" interactionDistance={3} />
 
-            {/* West wall (to Dining/Kitchen) - with interactive door */}
-            <Wall position={[-4, 1.75, -4.6]} args={[0.2, 3.5, 10.8]} />  {/* Back section */}
-            <Wall position={[-4, 1.75, 4.1]} args={[0.2, 3.5, 1.8]} />    {/* Front section */}
-            <Wall position={[-4, 3.3, 2]} args={[0.2, 0.4, 2.5]} />       {/* Above door */}
-            <InteractiveDoor position={[-4, 1.5, 2]} rotation={[0, Math.PI / 2, 0]} args={[2.5, 3, 0.12]} color="#4A3728" interactionDistance={3} />
+            {/* West wall (to Dining/Kitchen) - moved out to x=-6 to restore lounge size */}
+            <Wall position={[-6, 1.75, -4.6]} args={[0.2, 3.5, 10.8]} />  {/* Back section */}
+            <Wall position={[-6, 1.75, 4.1]} args={[0.2, 3.5, 1.8]} />    {/* Front section */}
+            <Wall position={[-6, 3.3, 2]} args={[0.2, 0.4, 2.5]} />       {/* Above door */}
+            <InteractiveDoor position={[-6, 1.5, 2]} rotation={[0, Math.PI / 2, 0]} args={[2.5, 3, 0.12]} color="#4A3728" interactionDistance={3} />
 
             {/* North Wall (Glass Doors to Backyard) */}
             <GlassWindow position={[0, 1.75, -10]} args={[8, 3, 0.1]} />
@@ -918,8 +919,8 @@ function GroundFloor() {
 
             {/* Main sofa facing TV */}
             <Sofa position={[0, 0, -4.5]} rotation={[0, Math.PI, 0]} />
-            {/* Fireplace on west wall */}
-            <InteractiveFireplace position={[-3.5, 0, -6.5]} rotation={[0, Math.PI / 2, 0]} />
+            {/* Fireplace on west wall - moved to x=-5.5 (for wall at -6) */}
+            <InteractiveFireplace position={[-5.5, 0, -6.5]} rotation={[0, Math.PI / 2, 0]} />
             {/* Armchairs on the right */}
             <Armchair position={[3, 0, -5.5]} rotation={[0, -Math.PI / 2, 0]} />
             <Armchair position={[3, 0, -7.5]} rotation={[0, -Math.PI / 2, 0]} />
@@ -933,23 +934,25 @@ function GroundFloor() {
             <Bookshelf position={[3, 0, -9.3]} rotation={[0, 0, 0]} />
 
             {/* === DINING AREA (West of Living) === */}
-            <Wall position={[-10, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
+            {/* Outer Walls - Expanded to x=±14 */}
+            {/* Outer Walls - Expanded to x=\u00B118 */}
+            <Wall position={[-18, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
 
-            <Table position={[-3, 0, 0]} args={[2.4, 0.75, 1.2]} color="#5C4033" />
+            <Table position={[-12, 0, 0]} args={[2.4, 0.75, 1.2]} color="#5C4033" />
             {/* Dining Chairs (8 around table) */}
-            <DiningChair position={[-4.2, 0, 0]} rotation={[0, Math.PI / 2, 0]} />
-            <DiningChair position={[-1.8, 0, 0]} rotation={[0, -Math.PI / 2, 0]} />
-            <DiningChair position={[-3.5, 0, 0.8]} rotation={[0, Math.PI, 0]} />
-            <DiningChair position={[-2.5, 0, 0.8]} rotation={[0, Math.PI, 0]} />
-            <DiningChair position={[-3.5, 0, -0.8]} />
-            <DiningChair position={[-2.5, 0, -0.8]} />
-            <DiningChair position={[-4.2, 0, 0.5]} rotation={[0, Math.PI / 2, 0]} />
-            <DiningChair position={[-1.8, 0, -0.5]} rotation={[0, -Math.PI / 2, 0]} />
+            <DiningChair position={[-13.2, 0, 0]} rotation={[0, Math.PI / 2, 0]} />
+            <DiningChair position={[-10.8, 0, 0]} rotation={[0, -Math.PI / 2, 0]} />
+            <DiningChair position={[-12.5, 0, 0.8]} rotation={[0, Math.PI, 0]} />
+            <DiningChair position={[-11.5, 0, 0.8]} rotation={[0, Math.PI, 0]} />
+            <DiningChair position={[-12.5, 0, -0.8]} />
+            <DiningChair position={[-11.5, 0, -0.8]} />
+            <DiningChair position={[-13.2, 0, 0.5]} rotation={[0, Math.PI / 2, 0]} />
+            <DiningChair position={[-10.8, 0, -0.5]} rotation={[0, -Math.PI / 2, 0]} />
 
-            <Chandelier position={[-3, 2.5, 0]} />
+            <Chandelier position={[-12, 2.5, 0]} />
 
             {/* Crockery Cabinet */}
-            <RigidBody type="fixed" position={[-5.7, 0, 0]}>
+            <RigidBody type="fixed" position={[-13, 0, 0]}>
                 <Box args={[0.5, 1.8, 1.2]} position={[0, 0.9, 0]}>
                     <meshStandardMaterial color="#5C4033" />
                 </Box>
@@ -983,14 +986,16 @@ function GroundFloor() {
 
             {/* === GUEST BEDROOM (East Wing) === */}
             {/* Only the outer east wall - entrance is from living room's east wall */}
-            <Wall position={[10, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
+            {/* Outer Walls - Expanded to x=\u00B114 */}
+            {/* Outer Walls - Expanded to x=\u00B118 */}
+            <Wall position={[18, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
 
-            <Bed position={[9, 0, -3]} size="queen" color="#3366AA" />
-            <Nightstand position={[7.8, 0, -2]} />
-            <Nightstand position={[7.8, 0, -4]} />
-            <Wardrobe position={[9.5, 0, -7]} />
-            <Desk position={[8, 0, -8.5]} rotation={[0, -Math.PI / 2, 0]} />
-            <Chair position={[8.8, 0, -8.5]} rotation={[0, Math.PI / 2, 0]} />
+            <Bed position={[12, 0, -3]} size="queen" color="#3366AA" />
+            <Nightstand position={[10.8, 0, -2]} />
+            <Nightstand position={[10.8, 0, -4]} />
+            <Wardrobe position={[14, 0, -7]} />
+            <Desk position={[10, 0, -8.5]} rotation={[0, -Math.PI / 2, 0]} />
+            <Chair position={[10.8, 0, -8.5]} rotation={[0, Math.PI / 2, 0]} />
 
             {/* === GUEST BATHROOM (Near Guest Bedroom) === */}
             <Wall position={[8, 1.75, -9]} args={[4, 3.5, 0.2]} />
@@ -1000,8 +1005,8 @@ function GroundFloor() {
             <Vanity position={[7, 0, -9.5]} />
             <ShowerCubicle position={[8.5, 0, -9.5]} />
 
-            {/* CEILING */}
-            <Floor position={[0, 3.6, -2.5]} args={[20, 15]} color="#F5F5F0" />
+            {/* CEILING - Expanded */}
+            <Floor position={[0, 3.6, -2.5]} args={[36, 15]} color="#F5F5F0" />
 
             {/* ===== CEILING LIGHTS ===== */}
             <CeilingLight position={[0, 3.55, 3.5]} intensity={1} /> {/* Foyer */}
@@ -1021,13 +1026,15 @@ function FirstFloor() {
     return (
         <group position={[0, 3.8, 0]}>
             {/* Floor */}
-            <Floor position={[0, 0.05, -2.5]} args={[20, 15]} color="#B8860B" />
+            {/* Floor - Expanded */}
+            <Floor position={[0, 0.05, -2.5]} args={[36, 15]} color="#B8860B" />
 
             {/* Exterior Walls */}
-            <Wall position={[0, 1.75, 5]} args={[20, 3.5, 0.2]} />
-            <Wall position={[0, 1.75, -10]} args={[20, 3.5, 0.2]} />
-            <Wall position={[-10, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
-            <Wall position={[10, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
+            {/* Exterior Walls - Expanded to 28m */}
+            <Wall position={[0, 1.75, 5]} args={[36, 3.5, 0.2]} />
+            <Wall position={[0, 1.75, -10]} args={[36, 3.5, 0.2]} />
+            <Wall position={[-18, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
+            <Wall position={[18, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
 
             {/* === MASTER BEDROOM (Back, above Living Room) === */}
             <Wall position={[0, 1.75, -5]} args={[12, 3.5, 0.2]} />
@@ -1107,37 +1114,37 @@ function FirstFloor() {
             <RigidBody type="fixed">
                 {/* Main roof - front slope */}
                 <mesh position={[0, 5.5, 3]} rotation={[Math.PI * 0.2, 0, 0]}>
-                    <boxGeometry args={[22, 0.3, 12]} />
+                    <boxGeometry args={[38, 0.3, 12]} />
                     <meshStandardMaterial color="#5D4038" roughness={0.9} />
                 </mesh>
                 {/* Main roof - back slope */}
                 <mesh position={[0, 5.5, -8]} rotation={[-Math.PI * 0.2, 0, 0]}>
-                    <boxGeometry args={[22, 0.3, 12]} />
+                    <boxGeometry args={[38, 0.3, 12]} />
                     <meshStandardMaterial color="#5D4038" roughness={0.9} />
                 </mesh>
 
                 {/* Roof ridge (top beam) */}
-                <Box args={[22, 0.4, 0.4]} position={[0, 7.2, -2.5]}>
+                <Box args={[38, 0.4, 0.4]} position={[0, 7.2, -2.5]}>
                     <meshStandardMaterial color="#4A3528" roughness={0.8} />
                 </Box>
 
                 {/* Left gable (triangular end) */}
-                <mesh position={[-10.8, 5.5, -2.5]} rotation={[0, Math.PI / 2, 0]}>
+                <mesh position={[-18, 5.5, -2.5]} rotation={[0, Math.PI / 2, 0]}>
                     <boxGeometry args={[11, 4, 0.3]} />
                     <meshStandardMaterial color="#F5E6C8" roughness={0.85} />
                 </mesh>
                 {/* Right gable (triangular end) */}
-                <mesh position={[10.8, 5.5, -2.5]} rotation={[0, Math.PI / 2, 0]}>
+                <mesh position={[18, 5.5, -2.5]} rotation={[0, Math.PI / 2, 0]}>
                     <boxGeometry args={[11, 4, 0.3]} />
                     <meshStandardMaterial color="#F5E6C8" roughness={0.85} />
                 </mesh>
 
                 {/* Eaves (roof overhang) - front */}
-                <Box args={[23, 0.15, 1]} position={[0, 3.8, 5.8]}>
+                <Box args={[39, 0.15, 1]} position={[0, 3.8, 5.8]}>
                     <meshStandardMaterial color="#5D4038" roughness={0.9} />
                 </Box>
                 {/* Eaves - back */}
-                <Box args={[23, 0.15, 1]} position={[0, 3.8, -10.8]}>
+                <Box args={[39, 0.15, 1]} position={[0, 3.8, -10.8]}>
                     <meshStandardMaterial color="#5D4038" roughness={0.9} />
                 </Box>
 
