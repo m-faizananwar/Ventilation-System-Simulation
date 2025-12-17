@@ -885,17 +885,17 @@ function GroundFloor() {
             <Rug position={[0, 0.01, 4]} args={[1.5, 0.02, 1]} color="#553322" />
 
             {/* === LIVING ROOM (Center) === */}
-            {/* East wall (to Guest Bedroom) - door at z=2, width 2.5 spans z=0.75 to z=3.25 */}
-            <Wall position={[6, 1.75, -4.6]} args={[0.2, 3.5, 10.8]} />   {/* Back section: z=-10 to z=0.75 */}
-            <Wall position={[6, 1.75, 4.1]} args={[0.2, 3.5, 1.8]} />     {/* Front section: z=3.25 to z=5 */}
-            <Wall position={[6, 3.3, 2]} args={[0.2, 0.4, 2.5]} />        {/* Above door */}
-            <InteractiveDoor position={[6, 1.5, 2]} rotation={[0, Math.PI / 2, 0]} args={[2.5, 3, 0.12]} color="#4A3728" interactionDistance={3} />
+            {/* East wall (to Guest Bedroom) - door at z=2 */}
+            <Wall position={[4, 1.75, -4.6]} args={[0.2, 3.5, 10.8]} />   {/* Back section */}
+            <Wall position={[4, 1.75, 4.1]} args={[0.2, 3.5, 1.8]} />     {/* Front section */}
+            <Wall position={[4, 3.3, 2]} args={[0.2, 0.4, 2.5]} />        {/* Above door */}
+            <InteractiveDoor position={[4, 1.5, 2]} rotation={[0, Math.PI / 2, 0]} args={[2.5, 3, 0.12]} color="#4A3728" interactionDistance={3} />
 
             {/* West wall (to Dining/Kitchen) - with interactive door */}
-            <Wall position={[-6, 1.75, -4.6]} args={[0.2, 3.5, 10.8]} />  {/* Back section */}
-            <Wall position={[-6, 1.75, 4.1]} args={[0.2, 3.5, 1.8]} />    {/* Front section */}
-            <Wall position={[-6, 3.3, 2]} args={[0.2, 0.4, 2.5]} />       {/* Above door */}
-            <InteractiveDoor position={[-6, 1.5, 2]} rotation={[0, Math.PI / 2, 0]} args={[2.5, 3, 0.12]} color="#4A3728" interactionDistance={3} />
+            <Wall position={[-4, 1.75, -4.6]} args={[0.2, 3.5, 10.8]} />  {/* Back section */}
+            <Wall position={[-4, 1.75, 4.1]} args={[0.2, 3.5, 1.8]} />    {/* Front section */}
+            <Wall position={[-4, 3.3, 2]} args={[0.2, 0.4, 2.5]} />       {/* Above door */}
+            <InteractiveDoor position={[-4, 1.5, 2]} rotation={[0, Math.PI / 2, 0]} args={[2.5, 3, 0.12]} color="#4A3728" interactionDistance={3} />
 
             {/* North Wall (Glass Doors to Backyard) */}
             <GlassWindow position={[0, 1.75, -10]} args={[8, 3, 0.1]} />
@@ -919,7 +919,7 @@ function GroundFloor() {
             {/* Main sofa facing TV */}
             <Sofa position={[0, 0, -4.5]} rotation={[0, Math.PI, 0]} />
             {/* Fireplace on west wall */}
-            <InteractiveFireplace position={[-5.5, 0, -6.5]} rotation={[0, Math.PI / 2, 0]} />
+            <InteractiveFireplace position={[-3.5, 0, -6.5]} rotation={[0, Math.PI / 2, 0]} />
             {/* Armchairs on the right */}
             <Armchair position={[3, 0, -5.5]} rotation={[0, -Math.PI / 2, 0]} />
             <Armchair position={[3, 0, -7.5]} rotation={[0, -Math.PI / 2, 0]} />
