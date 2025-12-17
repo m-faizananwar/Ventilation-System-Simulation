@@ -225,17 +225,93 @@ const DiningChair = ({ position, rotation = [0, 0, 0] }) => (
     </group>
 );
 
-const TV = ({ position, rotation = [0, 0, 0], wallMounted = true }) => (
-    <RigidBody type="fixed" position={position} rotation={rotation}>
-        <Box args={[2, 1.2, 0.08]}>
-            <meshStandardMaterial color="#111" />
-        </Box>
-        {/* Screen */}
-        <Box args={[1.9, 1.1, 0.01]} position={[0, 0, 0.05]}>
-            <meshStandardMaterial color="#222" emissive="#446688" emissiveIntensity={0.1} />
-        </Box>
-    </RigidBody>
-);
+// Animated TV component with screen effects
+const AnimatedTV = ({ position, rotation = [0, 0, 0] }) => {
+    const [isOn, setIsOn] = useState(true);
+    const [isNearby, setIsNearby] = useState(false);
+    const screenRef = useRef();
+    const groupRef = useRef();
+    const { camera, raycaster } = useThree();
+    const [, getKeys] = useKeyboardControls();
+    const lastInteract = useRef(false);
+    const timeRef = useRef(0);
+
+    useFrame((state, delta) => {
+        if (!groupRef.current) return;
+
+        const tvPos = groupRef.current.getWorldPosition(new THREE.Vector3());
+        const distance = camera.position.distanceTo(tvPos);
+        const isClose = distance < 4;
+
+        // Raycast check
+        let isLookingAt = false;
+        if (isClose && screenRef.current) {
+            raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+            const intersects = raycaster.intersectObject(screenRef.current, true);
+            isLookingAt = intersects.length > 0;
+        }
+
+        const nowNearby = isClose && isLookingAt;
+        if (nowNearby !== isNearby) setIsNearby(nowNearby);
+
+        // Handle E key
+        const { interact } = getKeys();
+        if (nowNearby && interact && !lastInteract.current) {
+            setIsOn(prev => !prev);
+        }
+        lastInteract.current = interact;
+
+        // Animate screen colors when on
+        if (isOn && screenRef.current && screenRef.current.material) {
+            timeRef.current += delta;
+            const t = timeRef.current;
+
+            // Color cycling effect (simulating video content)
+            const r = Math.sin(t * 0.7) * 0.3 + 0.4;
+            const g = Math.sin(t * 0.9 + 1) * 0.3 + 0.4;
+            const b = Math.sin(t * 1.1 + 2) * 0.3 + 0.5;
+
+            screenRef.current.material.emissive.setRGB(r, g, b);
+            screenRef.current.material.emissiveIntensity = 0.5 + Math.sin(t * 15) * 0.1; // Subtle flicker
+        }
+    });
+
+    // Tooltip effect
+    useEffect(() => {
+        if (isNearby) {
+            window.dispatchEvent(new CustomEvent('showInteractionTooltip', {
+                detail: { show: true, text: isOn ? 'Press E to turn off TV' : 'Press E to turn on TV' }
+            }));
+        } else {
+            window.dispatchEvent(new CustomEvent('showInteractionTooltip', {
+                detail: { show: false }
+            }));
+        }
+    }, [isNearby, isOn]);
+
+    return (
+        <group ref={groupRef} position={position} rotation={rotation}>
+            <RigidBody type="fixed">
+                {/* TV Frame */}
+                <Box args={[2, 1.2, 0.08]}>
+                    <meshStandardMaterial color="#111" />
+                </Box>
+                {/* Screen */}
+                <Box ref={screenRef} args={[1.9, 1.1, 0.01]} position={[0, 0, 0.05]}>
+                    <meshStandardMaterial
+                        color={isOn ? "#111" : "#0a0a0a"}
+                        emissive={isOn ? "#446688" : "#000000"}
+                        emissiveIntensity={isOn ? 0.5 : 0}
+                    />
+                </Box>
+                {/* TV light glow when on */}
+                {isOn && (
+                    <pointLight position={[0, 0, 0.5]} color="#6688AA" intensity={0.3} distance={3} />
+                )}
+            </RigidBody>
+        </group>
+    );
+};
 
 const TVConsole = ({ position }) => (
     <RigidBody type="fixed" position={position}>
@@ -472,6 +548,196 @@ const CoatHanger = ({ position }) => (
     </group>
 );
 
+// Interactive Fireplace component with on/off toggle
+import { useFrame, useThree } from '@react-three/fiber';
+import { useKeyboardControls } from '@react-three/drei';
+import { useState, useRef, useEffect } from 'react';
+import * as THREE from 'three';
+
+const InteractiveFireplace = ({ position, rotation = [0, 0, 0], interactionDistance = 3 }) => {
+    const [isOn, setIsOn] = useState(true);
+    const [isNearby, setIsNearby] = useState(false);
+    const groupRef = useRef();
+    const fireplaceRef = useRef();
+    const flame1Ref = useRef();
+    const flame2Ref = useRef();
+    const flame3Ref = useRef();
+    const flame4Ref = useRef();
+    const light1Ref = useRef();
+    const light2Ref = useRef();
+    const { camera, raycaster } = useThree();
+    const [, getKeys] = useKeyboardControls();
+    const lastInteract = useRef(false);
+    const timeRef = useRef(0);
+
+    // Check proximity, look direction, handle E key, AND animate fire
+    useFrame((state, delta) => {
+        if (!groupRef.current || !fireplaceRef.current) return;
+
+        const fireplacePos = groupRef.current.getWorldPosition(new THREE.Vector3());
+        const distance = camera.position.distanceTo(fireplacePos);
+
+        // Check if player is nearby
+        const isClose = distance < interactionDistance;
+
+        // Check if player is looking at the fireplace
+        let isLookingAt = false;
+        if (isClose) {
+            raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+            const intersects = raycaster.intersectObject(fireplaceRef.current, true);
+            isLookingAt = intersects.length > 0;
+        }
+
+        const wasNearby = isNearby;
+        const nowNearby = isClose && isLookingAt;
+
+        if (nowNearby !== wasNearby) {
+            setIsNearby(nowNearby);
+        }
+
+        // Handle E key press
+        const { interact } = getKeys();
+        if (nowNearby && interact && !lastInteract.current) {
+            setIsOn(prev => !prev);
+        }
+        lastInteract.current = interact;
+
+        // ANIMATE FIRE when on
+        if (isOn) {
+            timeRef.current += delta * 8; // Speed of flickering
+            const t = timeRef.current;
+
+            // Animate main flame
+            if (flame1Ref.current) {
+                flame1Ref.current.scale.x = 1 + Math.sin(t * 3.7) * 0.15;
+                flame1Ref.current.scale.y = 1 + Math.sin(t * 4.3) * 0.2;
+                flame1Ref.current.position.x = Math.sin(t * 2.1) * 0.05;
+            }
+            // Animate left flame
+            if (flame2Ref.current) {
+                flame2Ref.current.scale.x = 1 + Math.sin(t * 4.1 + 1) * 0.2;
+                flame2Ref.current.scale.y = 1 + Math.sin(t * 3.5 + 1) * 0.25;
+            }
+            // Animate right flame
+            if (flame3Ref.current) {
+                flame3Ref.current.scale.x = 1 + Math.sin(t * 3.9 + 2) * 0.2;
+                flame3Ref.current.scale.y = 1 + Math.sin(t * 4.7 + 2) * 0.25;
+            }
+            // Animate inner flame
+            if (flame4Ref.current) {
+                flame4Ref.current.scale.y = 1 + Math.sin(t * 5.2) * 0.3;
+            }
+            // Flicker lights
+            if (light1Ref.current) {
+                light1Ref.current.intensity = 4 + Math.sin(t * 6) * 1.5;
+            }
+            if (light2Ref.current) {
+                light2Ref.current.intensity = 2.5 + Math.sin(t * 7 + 0.5) * 1;
+            }
+        }
+    });
+
+    // Tooltip effect
+    useEffect(() => {
+        if (isNearby) {
+            window.dispatchEvent(new CustomEvent('showInteractionTooltip', {
+                detail: { show: true, text: isOn ? 'Press E to turn off fire' : 'Press E to light fire' }
+            }));
+        } else {
+            window.dispatchEvent(new CustomEvent('showInteractionTooltip', {
+                detail: { show: false }
+            }));
+        }
+    }, [isNearby, isOn]);
+
+    return (
+        <group ref={groupRef} position={position} rotation={rotation}>
+            {/* Fireplace frame - sides, top, back (OPEN FRONT for fire visibility) */}
+            <RigidBody type="fixed">
+                {/* Left pillar */}
+                <Box args={[0.3, 1.5, 0.5]} position={[-0.85, 0.75, 0]}>
+                    <meshStandardMaterial color="#8B7355" roughness={0.9} />
+                </Box>
+                {/* Right pillar */}
+                <Box args={[0.3, 1.5, 0.5]} position={[0.85, 0.75, 0]}>
+                    <meshStandardMaterial color="#8B7355" roughness={0.9} />
+                </Box>
+                {/* Top bar */}
+                <Box ref={fireplaceRef} args={[2, 0.3, 0.5]} position={[0, 1.65, 0]}>
+                    <meshStandardMaterial color="#8B7355" roughness={0.9} />
+                </Box>
+                {/* Back wall (deep inside) */}
+                <Box args={[1.4, 1.2, 0.15]} position={[0, 0.6, -0.2]}>
+                    <meshStandardMaterial color="#1a1a1a" roughness={1} />
+                </Box>
+            </RigidBody>
+
+            {/* Mantle (top shelf) */}
+            <Box args={[2.4, 0.15, 0.7]} position={[0, 1.85, 0.1]}>
+                <meshStandardMaterial color="#5C4033" roughness={0.6} />
+            </Box>
+
+            {/* Hearth (floor in front) */}
+            <Box args={[2.2, 0.08, 0.9]} position={[0, 0.04, 0.4]}>
+                <meshStandardMaterial color="#555555" roughness={0.85} />
+            </Box>
+
+            {/* Logs (always visible) */}
+            <mesh position={[-0.25, 0.12, 0.1]} rotation={[0, 0.4, Math.PI / 12]}>
+                <cylinderGeometry args={[0.1, 0.1, 0.7, 8]} />
+                <meshStandardMaterial color="#3D2817" roughness={0.95} />
+            </mesh>
+            <mesh position={[0.25, 0.12, 0.1]} rotation={[0, -0.4, -Math.PI / 12]}>
+                <cylinderGeometry args={[0.1, 0.1, 0.7, 8]} />
+                <meshStandardMaterial color="#3D2817" roughness={0.95} />
+            </mesh>
+            <mesh position={[0, 0.2, 0.15]} rotation={[Math.PI / 2, 0, 0]}>
+                <cylinderGeometry args={[0.08, 0.08, 0.5, 8]} />
+                <meshStandardMaterial color="#4A3020" roughness={0.95} />
+            </mesh>
+
+            {/* FEROCIOUS FIRE - only visible when on */}
+            {isOn && (
+                <>
+                    {/* Large main flame - bright orange - positioned FORWARD */}
+                    <mesh ref={flame1Ref} position={[0, 0.6, 0.5]}>
+                        <coneGeometry args={[0.35, 0.9, 8]} />
+                        <meshStandardMaterial color="#FF6600" emissive="#FF4400" emissiveIntensity={3} transparent opacity={0.95} />
+                    </mesh>
+                    {/* Secondary flames - left */}
+                    <mesh ref={flame2Ref} position={[-0.25, 0.5, 0.45]}>
+                        <coneGeometry args={[0.22, 0.7, 6]} />
+                        <meshStandardMaterial color="#FF8800" emissive="#FF5500" emissiveIntensity={2.5} transparent opacity={0.9} />
+                    </mesh>
+                    {/* Secondary flames - right */}
+                    <mesh ref={flame3Ref} position={[0.25, 0.5, 0.45]}>
+                        <coneGeometry args={[0.22, 0.7, 6]} />
+                        <meshStandardMaterial color="#FF8800" emissive="#FF5500" emissiveIntensity={2.5} transparent opacity={0.9} />
+                    </mesh>
+                    {/* Inner yellow/white hot flames */}
+                    <mesh ref={flame4Ref} position={[0, 0.5, 0.55]}>
+                        <coneGeometry args={[0.18, 0.6, 6]} />
+                        <meshStandardMaterial color="#FFDD00" emissive="#FFCC00" emissiveIntensity={4} transparent opacity={0.85} />
+                    </mesh>
+                    {/* Glowing ember base - red hot coals */}
+                    <mesh position={[0, 0.12, 0.45]}>
+                        <boxGeometry args={[0.8, 0.12, 0.35]} />
+                        <meshStandardMaterial color="#FF3300" emissive="#FF0000" emissiveIntensity={2.5} />
+                    </mesh>
+                    {/* Flickering fire lights */}
+                    <pointLight ref={light1Ref} position={[0, 0.6, 0.6]} color="#FF6600" intensity={5} distance={10} />
+                    <pointLight ref={light2Ref} position={[0, 0.3, 0.5]} color="#FF4400" intensity={3} distance={8} />
+                </>
+            )}
+
+            {/* Chimney going up through ceiling */}
+            <Box args={[0.8, 4, 0.5]} position={[0, 3.8, 0]}>
+                <meshStandardMaterial color="#8B7355" roughness={0.9} />
+            </Box>
+        </group>
+    );
+};
+
 const Rug = ({ position, args = [3, 0.02, 2], color = "#8B4513" }) => (
     <Box args={args} position={position}>
         <meshStandardMaterial color={color} roughness={0.95} />
@@ -652,8 +918,8 @@ function GroundFloor() {
 
             {/* Main sofa facing TV */}
             <Sofa position={[0, 0, -4.5]} rotation={[0, Math.PI, 0]} />
-            {/* Side sofa */}
-            <Sofa position={[-3, 0, -6.5]} rotation={[0, Math.PI / 2, 0]} color="#443333" />
+            {/* Fireplace on west wall */}
+            <InteractiveFireplace position={[-5.5, 0, -6.5]} rotation={[0, Math.PI / 2, 0]} />
             {/* Armchairs on the right */}
             <Armchair position={[3, 0, -5.5]} rotation={[0, -Math.PI / 2, 0]} />
             <Armchair position={[3, 0, -7.5]} rotation={[0, -Math.PI / 2, 0]} />
@@ -661,7 +927,7 @@ function GroundFloor() {
             <CoffeeTable position={[0, 0, -6.5]} />
 
             {/* Entertainment (Back/North Wall) */}
-            <TV position={[0, 1.5, -9.3]} rotation={[0, 0, 0]} />
+            <AnimatedTV position={[0, 1.5, -9.3]} rotation={[0, 0, 0]} />
             <TVConsole position={[0, 0, -9.3]} />
             <Bookshelf position={[-3, 0, -9.3]} rotation={[0, 0, 0]} />
             <Bookshelf position={[3, 0, -9.3]} rotation={[0, 0, 0]} />
@@ -773,7 +1039,7 @@ function FirstFloor() {
             <Bed position={[3, 0, -7.5]} size="king" color="#880000" />
             <Nightstand position={[1, 0, -6.5]} />
             <Nightstand position={[5, 0, -6.5]} />
-            <TV position={[-3, 1.5, -7.5]} rotation={[0, Math.PI / 2, 0]} />
+            <AnimatedTV position={[-3, 1.5, -7.5]} rotation={[0, Math.PI / 2, 0]} />
             <Armchair position={[-2, 0, -9]} rotation={[0, Math.PI / 4, 0]} />
 
             {/* Walk-in Closet */}
