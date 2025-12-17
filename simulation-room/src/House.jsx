@@ -615,35 +615,55 @@ function GroundFloor() {
             {/* Wall above door */}
             <Wall position={[0, 3.45, 5]} args={[2.6, 0.6, 0.2]} />
 
-            {/* Foyer Furniture */}
-            <ShoeRack position={[2.5, 0, 4]} />
-            <CoatHanger position={[2.5, 1.5, 4.8]} />
-            <Mirror position={[-2.5, 1.2, 4.85]} />
-            <Console position={[-2.5, 0, 4]} />
+            {/* Foyer Furniture - kept minimal */}
             <Rug position={[0, 0.01, 4]} args={[1.5, 0.02, 1]} color="#553322" />
 
             {/* === LIVING ROOM (Center) === */}
-            <Wall position={[6, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
-            <Wall position={[-6, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
+            {/* East wall (to Guest Bedroom) - door at z=2, width 2.5 spans z=0.75 to z=3.25 */}
+            <Wall position={[6, 1.75, -4.6]} args={[0.2, 3.5, 10.8]} />   {/* Back section: z=-10 to z=0.75 */}
+            <Wall position={[6, 1.75, 4.1]} args={[0.2, 3.5, 1.8]} />     {/* Front section: z=3.25 to z=5 */}
+            <Wall position={[6, 3.3, 2]} args={[0.2, 0.4, 2.5]} />        {/* Above door */}
+            <InteractiveDoor position={[6, 1.5, 2]} rotation={[0, Math.PI / 2, 0]} args={[2.5, 3, 0.12]} color="#4A3728" interactionDistance={3} />
+
+            {/* West wall (to Dining/Kitchen) - open archway same position */}
+            <Wall position={[-6, 1.75, -4.6]} args={[0.2, 3.5, 10.8]} />  {/* Back section */}
+            <Wall position={[-6, 1.75, 4.1]} args={[0.2, 3.5, 1.8]} />    {/* Front section */}
+            <Wall position={[-6, 3.3, 2]} args={[0.2, 0.4, 2.5]} />       {/* Above archway */}
 
             {/* North Wall (Glass Doors to Backyard) */}
             <GlassWindow position={[0, 1.75, -10]} args={[8, 3, 0.1]} />
+            {/* Invisible collision barrier behind glass */}
+            <RigidBody type="fixed">
+                <Box args={[8, 3, 0.15]} position={[0, 1.75, -10]}>
+                    <meshStandardMaterial transparent opacity={0} />
+                </Box>
+            </RigidBody>
+            {/* Wall above glass window to ceiling */}
+            <Wall position={[0, 3.35, -10]} args={[8, 0.8, 0.2]} />
             <Wall position={[-5, 1.75, -10]} args={[2, 3.5, 0.2]} />
             <Wall position={[5, 1.75, -10]} args={[2, 3.5, 0.2]} />
 
-            {/* Living Room Furniture */}
-            <Rug position={[0, 0.01, -4]} args={[4, 0.02, 3]} color="#884422" />
-            <Sofa position={[0, 0, -2]} rotation={[0, Math.PI, 0]} />
-            <Sofa position={[-2.5, 0, -4]} rotation={[0, Math.PI / 2, 0]} color="#443333" />
-            <Armchair position={[2.5, 0, -3]} rotation={[0, -Math.PI / 2, 0]} />
-            <Armchair position={[2.5, 0, -5]} rotation={[0, -Math.PI / 2, 0]} />
-            <CoffeeTable position={[0, 0, -4]} />
+            {/* Living Room Furniture - arranged facing TV */}
+            {/* Large carpet - charcoal grey outer */}
+            <Rug position={[0, 0.12, -6.5]} args={[6, 0.05, 4]} color="#4A4A4A" />
+            {/* Inner accent - rich burgundy red */}
+            <Rug position={[0, 0.15, -6.5]} args={[5, 0.03, 3.2]} color="#8B1E3F" />
 
-            {/* Entertainment (East Wall) */}
-            <TV position={[5.8, 1.5, -4]} rotation={[0, -Math.PI / 2, 0]} />
-            <TVConsole position={[5.7, 0, -4]} />
-            <Bookshelf position={[5.7, 0, -6.5]} rotation={[0, -Math.PI / 2, 0]} />
-            <Bookshelf position={[5.7, 0, -1.5]} rotation={[0, -Math.PI / 2, 0]} />
+            {/* Main sofa facing TV */}
+            <Sofa position={[0, 0, -4.5]} rotation={[0, Math.PI, 0]} />
+            {/* Side sofa */}
+            <Sofa position={[-3, 0, -6.5]} rotation={[0, Math.PI / 2, 0]} color="#443333" />
+            {/* Armchairs on the right */}
+            <Armchair position={[3, 0, -5.5]} rotation={[0, -Math.PI / 2, 0]} />
+            <Armchair position={[3, 0, -7.5]} rotation={[0, -Math.PI / 2, 0]} />
+            {/* Coffee table in center */}
+            <CoffeeTable position={[0, 0, -6.5]} />
+
+            {/* Entertainment (Back/North Wall) */}
+            <TV position={[0, 1.5, -9.3]} rotation={[0, 0, 0]} />
+            <TVConsole position={[0, 0, -9.3]} />
+            <Bookshelf position={[-3, 0, -9.3]} rotation={[0, 0, 0]} />
+            <Bookshelf position={[3, 0, -9.3]} rotation={[0, 0, 0]} />
 
             {/* === DINING AREA (West of Living) === */}
             <Wall position={[-10, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
@@ -695,9 +715,8 @@ function GroundFloor() {
             </Box>
 
             {/* === GUEST BEDROOM (East Wing) === */}
+            {/* Only the outer east wall - entrance is from living room's east wall */}
             <Wall position={[10, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
-            <Wall position={[8, 1.75, 0]} args={[0.2, 3.5, 5]} />
-            <Door position={[8, 1.1, 2]} args={[0.8, 2.2, 0.1]} />
 
             <Bed position={[9, 0, -3]} size="queen" color="#3366AA" />
             <Nightstand position={[7.8, 0, -2]} />

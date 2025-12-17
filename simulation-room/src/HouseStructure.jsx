@@ -12,10 +12,10 @@ const EXTERIOR_WALL_COLOR = '#F5E6C8'; // Cream / Beige
 const TRIM_COLOR = '#FFFFFF'; // Pure white for trim
 const WOOD_TRIM_COLOR = '#5C4033'; // Dark wood brown
 
-// Floor Colors by Room Type
+// Floor Colors by Room Type - Blue Tones
 export const FLOOR_COLORS = {
-    living: '#D4A574', // Warm wood
-    bedroom: '#C9A86C', // Lighter wood
+    living: '#6B8FAD', // Soft slate blue
+    bedroom: '#7BA3C4', // Light sky blue
     bathroom: '#E0E0E0', // Light tile
     kitchen: '#BFBFBF', // Gray tile
     basement: '#555555', // Concrete
@@ -82,7 +82,7 @@ export const Floor = ({
     return (
         <RigidBody type="fixed" colliders="cuboid">
             <Box args={[args[0], args[1], 0.2]} position={position} rotation={rotation} receiveShadow>
-                <meshStandardMaterial color={floorColor} roughness={0.85} />
+                <meshStandardMaterial color={floorColor} roughness={0.7} metalness={0.1} />
             </Box>
         </RigidBody>
     );
@@ -146,6 +146,7 @@ import * as THREE from 'three';
 
 export const InteractiveDoor = ({
     position,
+    rotation = [0, 0, 0],
     args = [2, 2.8, 0.1], // Bigger door by default
     color = '#6B4423',
     frameColor = TRIM_COLOR,
@@ -193,7 +194,7 @@ export const InteractiveDoor = ({
     });
 
     return (
-        <group ref={groupRef} position={position}>
+        <group ref={groupRef} position={position} rotation={rotation}>
             {/* Door frame (stays fixed) */}
             <Box args={[width + frameWidth * 2 + 0.2, frameWidth * 1.5, depth + 0.1]} position={[0, height / 2 + frameWidth / 2, 0]}>
                 <meshStandardMaterial color={frameColor} roughness={0.4} />
