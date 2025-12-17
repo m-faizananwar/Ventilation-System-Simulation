@@ -202,14 +202,7 @@ export function World(props) {
                 </mesh>
 
                 {/* Garden Beds */}
-                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-15, 0, 8]} receiveShadow>
-                    <planeGeometry args={[8, 6]} />
-                    <meshStandardMaterial color="#6B4423" roughness={1} />
-                </mesh>
-                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[15, 0, 8]} receiveShadow>
-                    <planeGeometry args={[8, 6]} />
-                    <meshStandardMaterial color="#6B4423" roughness={1} />
-                </mesh>
+                {/* Garden Beds removed */}
             </RigidBody>
 
             {/* Fence - Realistic White Picket Fence */}
@@ -232,13 +225,24 @@ export function World(props) {
                     );
                 })}
 
-                {/* Fence Rails */}
-                <mesh position={[0, 0.5, 35]} castShadow>
-                    <boxGeometry args={[100, 0.1, 0.1]} />
+                {/* Fence Rails - Split to allow entrance */}
+                {/* Left Side */}
+                <mesh position={[-27, 0.5, 35]} castShadow>
+                    <boxGeometry args={[46, 0.1, 0.1]} />
                     <meshStandardMaterial color="#FFFFFF" roughness={0.6} />
                 </mesh>
-                <mesh position={[0, 0.9, 35]} castShadow>
-                    <boxGeometry args={[100, 0.1, 0.1]} />
+                <mesh position={[-27, 0.9, 35]} castShadow>
+                    <boxGeometry args={[46, 0.1, 0.1]} />
+                    <meshStandardMaterial color="#FFFFFF" roughness={0.6} />
+                </mesh>
+
+                {/* Right Side */}
+                <mesh position={[27, 0.5, 35]} castShadow>
+                    <boxGeometry args={[46, 0.1, 0.1]} />
+                    <meshStandardMaterial color="#FFFFFF" roughness={0.6} />
+                </mesh>
+                <mesh position={[27, 0.9, 35]} castShadow>
+                    <boxGeometry args={[46, 0.1, 0.1]} />
                     <meshStandardMaterial color="#FFFFFF" roughness={0.6} />
                 </mesh>
             </group>

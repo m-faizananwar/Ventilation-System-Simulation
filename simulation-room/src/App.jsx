@@ -11,14 +11,8 @@ import { Physics } from '@react-three/rapier';
 // FogSimulation removed
 
 function App() {
-    // Simulation state removed (fog, sensors, appliances)
-    // All UI states removed
-    // const [isInstructionsVisible, setInstructionsVisible] = useState(true);
-    // const [showCrosshair, setShowCrosshair] = useState(false);
+    // State and handlers removed
 
-    const handleSimulateFog = () => {
-        setFogIntensity(1.0); // Maximum pollution
-    };
 
     const handleStartSimulation = () => {
         // Pointer lock will be handled by clicking on canvas
