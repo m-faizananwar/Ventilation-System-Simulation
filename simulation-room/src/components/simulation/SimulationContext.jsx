@@ -236,6 +236,60 @@ export const SimulationProvider = ({ children }) => {
         };
     }, [sensorData]);
 
+    // Ventilation effect: slowly bring conditions back to normal
+    // This runs every second when any ventilation is active
+    useEffect(() => {
+        // Check if any ventilation is active
+        const anyVentActive = Object.values(ventilationStates).some(v => v.active);
+        if (!anyVentActive) return;
+
+        const interval = setInterval(() => {
+            // Calculate total decay factor based on active ventilations
+            let totalDecayFactor = 0;
+            Object.values(ventilationStates).forEach(vent => {
+                if (vent.active) {
+                    // Decay rate based on ventilation level
+                    const levelFactor = {
+                        'LOW': 0.02,   // 2% reduction per second
+                        'MED': 0.05,   // 5% reduction per second
+                        'HIGH': 0.1,   // 10% reduction per second
+                        'OFF': 0
+                    }[vent.level] || 0.05;
+                    totalDecayFactor += levelFactor;
+                }
+            });
+
+            // Each active ventilation contributes, capped at 30% per second max
+            totalDecayFactor = Math.min(totalDecayFactor, 0.3);
+
+            // Gradually reduce smoke level toward 0
+            setSmokeLevel(prev => {
+                if (prev <= 0) return 0;
+                const newVal = prev * (1 - totalDecayFactor);
+                return newVal < 1 ? 0 : newVal;
+            });
+
+            // Gradually clear burning items (remove items that have been burning for too long with ventilation)
+            setBurningItems(prev => {
+                if (prev.length === 0) return prev;
+                const now = Date.now();
+                // Items get cleared after 10 seconds of active ventilation
+                return prev.filter(item => now - item.startTime < 10000);
+            });
+
+            // If all hazards are cleared, reset alarm
+            setSmokeLevel(prev => {
+                if (prev <= 0 && !chimneyBlocked && burningItems.length === 0) {
+                    setAlarmActive(false);
+                }
+                return prev;
+            });
+
+        }, 1000); // Run every second
+
+        return () => clearInterval(interval);
+    }, [ventilationStates, chimneyBlocked, burningItems.length]);
+
     // Listen for RISC-V commands
     useEffect(() => {
         const handleRiscvCommand = (e) => {
