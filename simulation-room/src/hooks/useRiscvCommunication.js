@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import * as mqtt from 'mqtt';
+import mqtt from 'mqtt';
 
 /**
  * Custom hook for bidirectional MQTT communication with RISC-V Wokwi simulation.
@@ -27,7 +27,9 @@ export const useRiscvCommunication = () => {
             try {
                 const clientId = `simulation-${Math.random().toString(16).slice(2, 10)}`;
 
-                const client = mqtt.connect(MQTT_BROKER_URL, {
+                // Use mqtt.connect or mqtt directly (depending on how it's exported)
+                const connectFn = mqtt.connect || mqtt;
+                const client = connectFn(MQTT_BROKER_URL, {
                     clientId,
                     clean: true,
                     connectTimeout: 5000,
