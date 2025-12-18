@@ -447,6 +447,12 @@ export const InteractiveStove = ({ position, rotation = [0, 0, 0], interactionDi
                 burners: burnersOn
             }
         }));
+        // Dispatch global event for PickableItem burning logic
+        window.dispatchEvent(new CustomEvent('stoveBurnerState', {
+            detail: {
+                anyBurnerOn: burnersOn.some(Boolean)
+            }
+        }));
     }, [isNearby, burnersOn]);
 
     return (

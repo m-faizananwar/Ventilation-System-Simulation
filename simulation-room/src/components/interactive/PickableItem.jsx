@@ -9,10 +9,24 @@ const BURN_RADIUS = 1.5;
 // Items that don't burn (metal utensils)
 const FIREPROOF_ITEMS = ['kettle', 'pot', 'pan', 'mug'];
 
+
 // Track which item is currently being held globally
 let globalHeldItem = null;
 
-export const PickableItem = ({ children, position: initialPosition, itemType, pickupDistance = 2 }) => {
+// Track if any stove burner is on (shared across PickableItems)
+let globalStoveBurnerOn = false;
+
+// Listen for stove burner state events
+if (typeof window !== 'undefined' && !window._pickableItemStoveListener) {
+    window.addEventListener('stoveBurnerState', (e) => {
+        if (e.detail && typeof e.detail.anyBurnerOn === 'boolean') {
+            globalStoveBurnerOn = e.detail.anyBurnerOn;
+        }
+    });
+    window._pickableItemStoveListener = true;
+}
+
+export const PickableItem = ({ children, position: initialPosition, itemType, pickupDistance = 2.5 }) => {
     const [isPickedUp, setIsPickedUp] = useState(false);
     const [currentPosition, setCurrentPosition] = useState(initialPosition);
     const [isBurning, setIsBurning] = useState(false);
@@ -29,6 +43,7 @@ export const PickableItem = ({ children, position: initialPosition, itemType, pi
     const isLookingAtRef = useRef(false);
     const frameCounter = useRef(0);
 
+
     useFrame((state, delta) => {
         if (isDestroyed) return;
         if (!groupRef.current || isPickedUp) return;
@@ -43,25 +58,26 @@ export const PickableItem = ({ children, position: initialPosition, itemType, pi
         const distance = camera.position.distanceTo(itemPos);
         isNearbyRef.current = distance < pickupDistance;
 
-        // Check if player is looking at this item (simplified)
+        // Check if player is looking at this item (relaxed angle for kitchen table)
         if (isNearbyRef.current) {
             const cameraDirection = new THREE.Vector3();
             camera.getWorldDirection(cameraDirection);
             const toItem = new THREE.Vector3().subVectors(itemPos, camera.position).normalize();
-            isLookingAtRef.current = cameraDirection.dot(toItem) > 0.95;
+            // Allow a wider angle for picking up (0.90 instead of 0.95)
+            isLookingAtRef.current = cameraDirection.dot(toItem) > 0.90;
         } else {
             isLookingAtRef.current = false;
         }
 
         // Update hint visibility
-        const shouldShow = isNearbyRef.current && isLookingAtRef.current && !isBurning;
+        const shouldShow = isNearbyRef.current && isLookingAtRef.current && !isBurning && !isDestroyed;
         if (shouldShow !== showHint) {
             setShowHint(shouldShow);
         }
 
         // Check for G key press - only pickup if looking at item and nothing else is held
         const { grab } = getKeys();
-        if (grab && !lastGrab.current && isNearbyRef.current && isLookingAtRef.current && !isBurning && globalHeldItem === null) {
+        if (grab && !lastGrab.current && isNearbyRef.current && isLookingAtRef.current && !isBurning && !isDestroyed && globalHeldItem === null) {
             setIsPickedUp(true);
             globalHeldItem = itemType; // Lock pickup to this item
             window.dispatchEvent(new CustomEvent('itemPickup', {
@@ -70,11 +86,13 @@ export const PickableItem = ({ children, position: initialPosition, itemType, pi
         }
         lastGrab.current = grab;
 
+
         // Check if near stove (burning detection) - but NOT for fireproof items
+        // Only burn if at least one stove burner is ON
         if (!isPickedUp && !isBurning && !FIREPROOF_ITEMS.includes(itemType)) {
             const stovePos = new THREE.Vector3(...STOVE_POSITION);
             const distanceToStove = itemPos.distanceTo(stovePos);
-            if (distanceToStove < BURN_RADIUS) {
+            if (distanceToStove < BURN_RADIUS && globalStoveBurnerOn) {
                 setIsBurning(true);
             }
         }
@@ -102,6 +120,7 @@ export const PickableItem = ({ children, position: initialPosition, itemType, pi
         }
     });
 
+
     // Listen for drop event - calculate new drop position
     useEffect(() => {
         const handleDrop = (e) => {
@@ -124,6 +143,13 @@ export const PickableItem = ({ children, position: initialPosition, itemType, pi
         window.addEventListener('itemDrop', handleDrop);
         return () => window.removeEventListener('itemDrop', handleDrop);
     }, [itemType, camera]);
+
+    // Reset globalHeldItem if destroyed
+    useEffect(() => {
+        if (isDestroyed && globalHeldItem === itemType) {
+            globalHeldItem = null;
+        }
+    }, [isDestroyed, itemType]);
 
     // Listen for global G key to drop when holding
     useEffect(() => {

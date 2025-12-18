@@ -177,6 +177,148 @@ export const GroundFloor = () => {
             <PickableItem position={[-12.3, 0.96, -9.4]} itemType="pan"><Cylinder args={[0.18, 0.15, 0.06, 16]} position={[0, 0.03, 0]}><meshStandardMaterial color="#1a1a1a" /></Cylinder></PickableItem>
             <PickableItem position={[-11.6, 0.96, -9.4]} itemType="roti"><Cylinder args={[0.12, 0.12, 0.015, 20]} position={[0, 0.008, 0]}><meshStandardMaterial color="#D4A574" /></Cylinder></PickableItem>
 
+            {/* === KITCHEN MARBLE TABLE/ISLAND ITEMS === */}
+            {/* Realistic Milk Carton Pack */}
+            <PickableItem position={[-12.8, 1.02, -6.2]} itemType="milk-carton">
+                <group>
+                    {/* Main carton body */}
+                    <Box args={[0.08, 0.22, 0.08]} position={[0, 0.11, 0]}>
+                        <meshStandardMaterial color="#1E88E5" />
+                    </Box>
+                    {/* Top folded part */}
+                    <Box args={[0.075, 0.04, 0.075]} position={[0, 0.23, 0]}>
+                        <meshStandardMaterial color="#1565C0" />
+                    </Box>
+                    {/* Roof/triangle top */}
+                    <mesh position={[0, 0.27, 0]} rotation={[0, Math.PI/4, 0]}>
+                        <coneGeometry args={[0.055, 0.04, 4]} />
+                        <meshStandardMaterial color="#1565C0" />
+                    </mesh>
+                    {/* White label stripe */}
+                    <Box args={[0.082, 0.08, 0.01]} position={[0, 0.1, 0.04]}>
+                        <meshStandardMaterial color="#FFFFFF" />
+                    </Box>
+                    {/* "MILK" text area */}
+                    <Box args={[0.06, 0.03, 0.001]} position={[0, 0.1, 0.045]}>
+                        <meshStandardMaterial color="#0D47A1" />
+                    </Box>
+                </group>
+            </PickableItem>
+            
+            {/* Tissue Paper Box */}
+            <PickableItem position={[-11.2, 1.02, -6]} itemType="tissue-box">
+                <group>
+                    {/* Main box body */}
+                    <Box args={[0.24, 0.1, 0.12]} position={[0, 0.05, 0]}>
+                        <meshStandardMaterial color="#E3F2FD" />
+                    </Box>
+                    {/* Top with opening */}
+                    <Box args={[0.24, 0.02, 0.12]} position={[0, 0.11, 0]}>
+                        <meshStandardMaterial color="#BBDEFB" />
+                    </Box>
+                    {/* Oval opening */}
+                    <Box args={[0.1, 0.025, 0.04]} position={[0, 0.12, 0]}>
+                        <meshStandardMaterial color="#37474F" />
+                    </Box>
+                    {/* Tissue paper sticking out */}
+                    <Box args={[0.06, 0.05, 0.02]} position={[0, 0.15, 0]}>
+                        <meshStandardMaterial color="#FAFAFA" />
+                    </Box>
+                    {/* Decorative stripe */}
+                    <Box args={[0.242, 0.02, 0.005]} position={[0, 0.06, 0.058]}>
+                        <meshStandardMaterial color="#64B5F6" />
+                    </Box>
+                    <Box args={[0.242, 0.02, 0.005]} position={[0, 0.06, -0.058]}>
+                        <meshStandardMaterial color="#64B5F6" />
+                    </Box>
+                </group>
+            </PickableItem>
+            
+            {/* Cookie Plate with Cookies */}
+            <PickableItem position={[-13.3, 1.02, -5.8]} itemType="cookie-plate">
+                <group>
+                    {/* Plate base */}
+                    <Cylinder args={[0.18, 0.2, 0.025, 20]} position={[0, 0.012, 0]}>
+                        <meshStandardMaterial color="#FAFAFA" />
+                    </Cylinder>
+                    {/* Plate rim */}
+                    <Cylinder args={[0.2, 0.2, 0.01, 20]} position={[0, 0.03, 0]}>
+                        <meshStandardMaterial color="#F5F5F5" />
+                    </Cylinder>
+                    {/* Plate inner indent */}
+                    <Cylinder args={[0.14, 0.14, 0.008, 20]} position={[0, 0.025, 0]}>
+                        <meshStandardMaterial color="#EEEEEE" />
+                    </Cylinder>
+                    {/* Cookies */}
+                    <Cylinder args={[0.04, 0.04, 0.015, 12]} position={[-0.05, 0.04, -0.02]}>
+                        <meshStandardMaterial color="#D4A574" roughness={0.8} />
+                    </Cylinder>
+                    <Cylinder args={[0.04, 0.04, 0.015, 12]} position={[0.04, 0.04, 0.03]}>
+                        <meshStandardMaterial color="#C49A6C" roughness={0.8} />
+                    </Cylinder>
+                    <Cylinder args={[0.035, 0.035, 0.015, 12]} position={[0.02, 0.04, -0.04]}>
+                        <meshStandardMaterial color="#D4A574" roughness={0.8} />
+                    </Cylinder>
+                    <Cylinder args={[0.038, 0.038, 0.015, 12]} position={[-0.03, 0.04, 0.05]}>
+                        <meshStandardMaterial color="#B8956E" roughness={0.8} />
+                    </Cylinder>
+                    {/* Chocolate chips on cookies */}
+                    <Sphere args={[0.008, 6, 6]} position={[-0.06, 0.05, -0.015]}>
+                        <meshStandardMaterial color="#5D4037" />
+                    </Sphere>
+                    <Sphere args={[0.006, 6, 6]} position={[-0.04, 0.05, -0.03]}>
+                        <meshStandardMaterial color="#4E342E" />
+                    </Sphere>
+                    <Sphere args={[0.007, 6, 6]} position={[0.03, 0.05, 0.025]}>
+                        <meshStandardMaterial color="#5D4037" />
+                    </Sphere>
+                    <Sphere args={[0.006, 6, 6]} position={[0.05, 0.05, 0.04]}>
+                        <meshStandardMaterial color="#4E342E" />
+                    </Sphere>
+                </group>
+            </PickableItem>
+            
+            {/* Coffee Mug */}
+            <PickableItem position={[-10.6, 1.02, -6.3]} itemType="coffee-mug">
+                <group>
+                    {/* Mug body */}
+                    <Cylinder args={[0.04, 0.035, 0.1, 16]} position={[0, 0.05, 0]}>
+                        <meshStandardMaterial color="#FF7043" />
+                    </Cylinder>
+                    {/* Mug handle */}
+                    <mesh position={[0.055, 0.05, 0]}>
+                        <torusGeometry args={[0.025, 0.008, 8, 12, Math.PI]} />
+                        <meshStandardMaterial color="#FF7043" />
+                    </mesh>
+                    {/* Coffee inside */}
+                    <Cylinder args={[0.035, 0.035, 0.02, 16]} position={[0, 0.09, 0]}>
+                        <meshStandardMaterial color="#4E342E" />
+                    </Cylinder>
+                </group>
+            </PickableItem>
+            
+            {/* Fruit Bowl on Island */}
+            <group position={[-12, 1.02, -6.4]}>
+                {/* Bowl */}
+                <Sphere args={[0.15, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2]} position={[0, 0.02, 0]}>
+                    <meshStandardMaterial color="#8D6E63" side={2} />
+                </Sphere>
+                {/* Fruits */}
+                <Sphere args={[0.045, 10, 10]} position={[0, 0.1, 0]}>
+                    <meshStandardMaterial color="#FFA726" /> {/* Orange */}
+                </Sphere>
+                <Sphere args={[0.04, 10, 10]} position={[-0.05, 0.08, 0.03]}>
+                    <meshStandardMaterial color="#C62828" /> {/* Apple */}
+                </Sphere>
+                <Sphere args={[0.035, 10, 10]} position={[0.04, 0.08, -0.02]}>
+                    <meshStandardMaterial color="#7CB342" /> {/* Green Apple */}
+                </Sphere>
+                {/* Banana */}
+                <Cylinder args={[0.015, 0.012, 0.12, 8]} position={[0.06, 0.06, 0.04]} rotation={[0.3, 0.5, 0.8]}>
+                    <meshStandardMaterial color="#FFEB3B" />
+                </Cylinder>
+            </group>
+
             {/* === GUEST BEDROOM (East Wing) === */}
             <Wall position={[18, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
             {/* Back wall for guest bedroom */}
