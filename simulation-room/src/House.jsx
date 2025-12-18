@@ -6,44 +6,116 @@ import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 // PickableItem component - wraps items that can be picked up with G key
-const PickableItem = ({ children, position, itemType, pickupDistance = 2 }) => {
+// Stove burner positions for burning detection (stove is at -17.5, 0, -5.5)
+const STOVE_POSITION = [-17.5, 1.0, -5.5];
+const BURN_RADIUS = 1.5;
+// Items that don't burn (metal utensils)
+const FIREPROOF_ITEMS = ['kettle', 'pot', 'pan', 'mug'];
+
+// Track which item is currently being held globally
+let globalHeldItem = null;
+
+const PickableItem = ({ children, position: initialPosition, itemType, pickupDistance = 2 }) => {
     const [isPickedUp, setIsPickedUp] = useState(false);
     const [isNearby, setIsNearby] = useState(false);
+    const [isLookingAt, setIsLookingAt] = useState(false);
+    const [currentPosition, setCurrentPosition] = useState(initialPosition);
+    const [isBurning, setIsBurning] = useState(false);
+    const [burnProgress, setBurnProgress] = useState(0);
+    const [isDestroyed, setIsDestroyed] = useState(false);
     const groupRef = useRef();
+    const flameRefs = [useRef(), useRef(), useRef()];
     const { camera } = useThree();
     const [, getKeys] = useKeyboardControls();
     const lastGrab = useRef(false);
+    const burnTime = useRef(0);
 
-    useFrame(() => {
+    useFrame((state, delta) => {
+        if (isDestroyed) return;
         if (!groupRef.current || isPickedUp) return;
 
-        // Check distance to player
-        const itemPos = new THREE.Vector3(...position);
+        // Check distance to player based on current position
+        const itemPos = new THREE.Vector3(...currentPosition);
         const distance = camera.position.distanceTo(itemPos);
-        setIsNearby(distance < pickupDistance);
+        const nearby = distance < pickupDistance;
+        setIsNearby(nearby);
 
-        // Check for G key press
+        // Check if player is looking at this item (crosshair pointing at it)
+        if (nearby) {
+            const cameraDirection = new THREE.Vector3();
+            camera.getWorldDirection(cameraDirection);
+
+            const toItem = new THREE.Vector3().subVectors(itemPos, camera.position).normalize();
+            const dotProduct = cameraDirection.dot(toItem);
+
+            // dotProduct > 0.95 means camera is pointing within ~18 degrees of item
+            setIsLookingAt(dotProduct > 0.95);
+        } else {
+            setIsLookingAt(false);
+        }
+
+        // Check for G key press - only pickup if looking at item and nothing else is held
         const { grab } = getKeys();
-        if (grab && !lastGrab.current && isNearby) {
-            // Pick up the item
+        if (grab && !lastGrab.current && isNearby && isLookingAt && !isBurning && globalHeldItem === null) {
             setIsPickedUp(true);
+            globalHeldItem = itemType; // Lock pickup to this item
             window.dispatchEvent(new CustomEvent('itemPickup', {
-                detail: { type: itemType, position }
+                detail: { type: itemType, position: currentPosition }
             }));
         }
         lastGrab.current = grab;
+
+        // Check if near stove (burning detection) - but NOT for fireproof items
+        if (!isPickedUp && !isBurning && !FIREPROOF_ITEMS.includes(itemType)) {
+            const stovePos = new THREE.Vector3(...STOVE_POSITION);
+            const distanceToStove = itemPos.distanceTo(stovePos);
+            if (distanceToStove < BURN_RADIUS) {
+                setIsBurning(true);
+            }
+        }
+
+        // Burning animation
+        if (isBurning) {
+            burnTime.current += delta;
+            setBurnProgress(Math.min(1, burnTime.current / 3)); // 3 seconds to burn
+
+            // Animate flames
+            flameRefs.forEach((ref, i) => {
+                if (ref.current) {
+                    ref.current.scale.y = 0.5 + Math.sin(state.clock.elapsedTime * 10 + i) * 0.3;
+                    ref.current.position.y = 0.1 + Math.sin(state.clock.elapsedTime * 8 + i * 2) * 0.05;
+                }
+            });
+
+            // Destroy after burning
+            if (burnTime.current > 3) {
+                setIsDestroyed(true);
+            }
+        }
     });
 
-    // Listen for drop event
+    // Listen for drop event - calculate new drop position
     useEffect(() => {
         const handleDrop = (e) => {
-            if (e.detail?.type === itemType || !e.detail) {
+            if (e.detail?.type === itemType) {
+                const direction = new THREE.Vector3();
+                camera.getWorldDirection(direction);
+
+                // Drop item 1.5 units in front at surface level (y=1.0 for stove/counter height)
+                const dropPos = [
+                    camera.position.x + direction.x * 1.5,
+                    1.0, // Fixed surface height (stove top / counter level)
+                    camera.position.z + direction.z * 1.5
+                ];
+
+                setCurrentPosition(dropPos);
                 setIsPickedUp(false);
+                globalHeldItem = null; // Release the lock so other items can be picked up
             }
         };
         window.addEventListener('itemDrop', handleDrop);
         return () => window.removeEventListener('itemDrop', handleDrop);
-    }, [itemType]);
+    }, [itemType, camera]);
 
     // Listen for global G key to drop when holding
     useEffect(() => {
@@ -56,15 +128,86 @@ const PickableItem = ({ children, position, itemType, pickupDistance = 2 }) => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isPickedUp, itemType]);
 
-    if (isPickedUp) return null;
+    if (isPickedUp || isDestroyed) return null;
 
     return (
-        <group ref={groupRef} position={position}>
-            {children}
-            {/* Show pickup hint when nearby */}
-            {isNearby && (
+        <group ref={groupRef} position={currentPosition}>
+            {/* Item with burn effect */}
+            <group scale={isBurning ? [1 - burnProgress * 0.5, 1 - burnProgress * 0.5, 1 - burnProgress * 0.5] : [1, 1, 1]}>
+                {children}
+            </group>
+
+            {/* Enhanced Fire effect when burning */}
+            {isBurning && (
+                <group>
+                    {/* Multiple animated flames */}
+                    {[-0.08, -0.04, 0, 0.04, 0.08].map((x, i) => (
+                        <mesh
+                            key={`flame-${i}`}
+                            ref={i < 3 ? flameRefs[i] : null}
+                            position={[x, 0.08 + Math.sin(i) * 0.02, (i % 2) * 0.03]}
+                        >
+                            <coneGeometry args={[0.03 + (i === 2 ? 0.02 : 0), 0.12 + (i === 2 ? 0.06 : 0), 8]} />
+                            <meshStandardMaterial
+                                color={i === 2 ? "#FF2200" : i % 2 === 0 ? "#FF6600" : "#FF9900"}
+                                emissive={i === 2 ? "#FF4400" : "#FF6600"}
+                                emissiveIntensity={3}
+                                transparent
+                                opacity={0.85}
+                            />
+                        </mesh>
+                    ))}
+
+                    {/* Inner hot core flames */}
+                    <mesh position={[0, 0.06, 0]}>
+                        <coneGeometry args={[0.02, 0.08, 6]} />
+                        <meshStandardMaterial color="#FFFF00" emissive="#FFFF00" emissiveIntensity={4} transparent opacity={0.7} />
+                    </mesh>
+
+                    {/* Flickering fire glow */}
+                    <pointLight position={[0, 0.15, 0]} color="#FF4500" intensity={3 + burnProgress} distance={2} />
+                    <pointLight position={[0, 0.05, 0]} color="#FF8C00" intensity={2} distance={1.5} />
+
+                    {/* Rising smoke particles */}
+                    {[0, 1, 2, 3].map((i) => (
+                        <mesh key={`smoke-${i}`} position={[
+                            Math.sin(i * 1.5) * 0.05,
+                            0.2 + burnProgress * 0.5 + i * 0.15,
+                            Math.cos(i * 1.5) * 0.05
+                        ]}>
+                            <sphereGeometry args={[0.04 + i * 0.02 + burnProgress * 0.05, 8, 8]} />
+                            <meshStandardMaterial
+                                color="#444444"
+                                transparent
+                                opacity={Math.max(0, 0.5 - i * 0.1 - burnProgress * 0.2)}
+                            />
+                        </mesh>
+                    ))}
+
+                    {/* Ember sparks */}
+                    {burnProgress > 0.3 && [0, 1, 2].map((i) => (
+                        <mesh key={`ember-${i}`} position={[
+                            Math.sin(burnProgress * 10 + i * 2) * 0.1,
+                            0.15 + burnProgress * 0.4 + i * 0.05,
+                            Math.cos(burnProgress * 8 + i) * 0.1
+                        ]}>
+                            <sphereGeometry args={[0.008, 4, 4]} />
+                            <meshStandardMaterial color="#FF6600" emissive="#FF4400" emissiveIntensity={5} />
+                        </mesh>
+                    ))}
+
+                    {/* Charring effect on ground */}
+                    <mesh position={[0, -0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                        <circleGeometry args={[0.15 + burnProgress * 0.1, 16]} />
+                        <meshStandardMaterial color="#1a1a1a" transparent opacity={burnProgress * 0.8} />
+                    </mesh>
+                </group>
+            )}
+
+            {/* Pickup hint - only shows when looking at item */}
+            {isNearby && isLookingAt && !isBurning && (
                 <sprite position={[0, 0.3, 0]} scale={[0.5, 0.15, 1]}>
-                    <spriteMaterial color="#FFFFFF" opacity={0.8} transparent />
+                    <spriteMaterial color="#00FF00" opacity={0.9} transparent />
                 </sprite>
             )}
         </group>
@@ -1706,10 +1849,7 @@ function GroundFloor() {
                 <Cylinder args={[0.15, 0.12, 0.08, 16]} position={[0, 0.04, 0]}>
                     <meshStandardMaterial color="#ECEFF1" />
                 </Cylinder>
-                {/* Apples */}
-                <Sphere args={[0.045, 10, 10]} position={[-0.04, 0.12, 0]}>
-                    <meshStandardMaterial color="#C62828" roughness={0.4} />
-                </Sphere>
+                {/* Green Apple (static) */}
                 <Sphere args={[0.04, 10, 10]} position={[0.04, 0.11, 0.03]}>
                     <meshStandardMaterial color="#43A047" roughness={0.4} />
                 </Sphere>
@@ -1722,6 +1862,13 @@ function GroundFloor() {
                     <meshStandardMaterial color="#FFEB3B" roughness={0.6} />
                 </Cylinder>
             </group>
+
+            {/* Red apple - PICKABLE */}
+            <PickableItem position={[-12.54, 1.08, -9.35]} itemType="apple">
+                <Sphere args={[0.045, 10, 10]}>
+                    <meshStandardMaterial color="#C62828" roughness={0.4} />
+                </Sphere>
+            </PickableItem>
 
             {/* Coffee maker */}
             <group position={[-11.8, 0.96, -9.45]}>
@@ -1739,16 +1886,15 @@ function GroundFloor() {
                 </Box>
             </group>
 
-            {/* Cereal box */}
-            <group position={[-11.2, 0.96, -9.42]}>
+            {/* Cereal box - PICKABLE */}
+            <PickableItem position={[-11.2, 0.96, -9.42]} itemType="cereal">
                 <Box args={[0.06, 0.25, 0.18]} position={[0, 0.125, 0]}>
                     <meshStandardMaterial color="#FFC107" />
                 </Box>
-                {/* Label area */}
                 <Box args={[0.001, 0.15, 0.12]} position={[0.031, 0.12, 0]}>
                     <meshStandardMaterial color="#FF5722" />
                 </Box>
-            </group>
+            </PickableItem>
 
             {/* Cutting board with knife */}
             <group position={[-10.5, 0.96, -9.38]}>
@@ -1764,15 +1910,15 @@ function GroundFloor() {
                 </Box>
             </group>
 
-            {/* Cooking oil bottle */}
-            <group position={[-9.9, 0.96, -9.42]}>
+            {/* Cooking oil bottle - PICKABLE */}
+            <PickableItem position={[-9.9, 0.96, -9.42]} itemType="oil">
                 <Cylinder args={[0.035, 0.035, 0.18, 12]} position={[0, 0.09, 0]}>
                     <meshStandardMaterial color="#FFEB3B" transparent opacity={0.7} />
                 </Cylinder>
                 <Cylinder args={[0.015, 0.015, 0.03, 8]} position={[0, 0.19, 0]}>
                     <meshStandardMaterial color="#795548" />
                 </Cylinder>
-            </group>
+            </PickableItem>
 
             {/* Spice jars */}
             {[-9.5, -9.3, -9.1].map((x, i) => (
@@ -1786,6 +1932,111 @@ function GroundFloor() {
                 </group>
             ))}
 
+            {/* === CHAI MAKING UTENSILS (On back counter near stove) === */}
+
+            {/* Tea Kettle - PICKABLE - Large and visible */}
+            <PickableItem position={[-15, 0.96, -9.4]} itemType="kettle">
+                {/* Kettle body */}
+                <Cylinder args={[0.12, 0.15, 0.2, 16]} position={[0, 0.1, 0]}>
+                    <meshStandardMaterial color="#D4D4D4" metalness={0.95} roughness={0.05} />
+                </Cylinder>
+                {/* Lid */}
+                <Cylinder args={[0.09, 0.1, 0.03, 16]} position={[0, 0.22, 0]}>
+                    <meshStandardMaterial color="#C0C0C0" metalness={0.9} roughness={0.1} />
+                </Cylinder>
+                {/* Lid knob */}
+                <Sphere args={[0.025, 12, 12]} position={[0, 0.26, 0]}>
+                    <meshStandardMaterial color="#1a1a1a" />
+                </Sphere>
+                {/* Spout */}
+                <Cylinder args={[0.025, 0.035, 0.12, 10]} position={[0.16, 0.14, 0]} rotation={[0, 0, -Math.PI / 4]}>
+                    <meshStandardMaterial color="#D4D4D4" metalness={0.95} />
+                </Cylinder>
+                {/* Handle */}
+                <Box args={[0.03, 0.14, 0.03]} position={[-0.15, 0.12, 0]}>
+                    <meshStandardMaterial color="#2a2a2a" />
+                </Box>
+            </PickableItem>
+
+            {/* Chai Patila (Copper Pot) - PICKABLE */}
+            <PickableItem position={[-14.3, 0.96, -9.4]} itemType="pot">
+                {/* Pot body - copper colored */}
+                <Cylinder args={[0.15, 0.12, 0.16, 16]} position={[0, 0.08, 0]}>
+                    <meshStandardMaterial color="#B87333" metalness={0.8} roughness={0.2} />
+                </Cylinder>
+                {/* Pot rim */}
+                <Cylinder args={[0.16, 0.16, 0.02, 16]} position={[0, 0.17, 0]}>
+                    <meshStandardMaterial color="#CD7F32" metalness={0.7} />
+                </Cylinder>
+                {/* Handle left */}
+                <Box args={[0.06, 0.03, 0.025]} position={[-0.18, 0.12, 0]}>
+                    <meshStandardMaterial color="#1a1a1a" />
+                </Box>
+                {/* Handle right */}
+                <Box args={[0.06, 0.03, 0.025]} position={[0.18, 0.12, 0]}>
+                    <meshStandardMaterial color="#1a1a1a" />
+                </Box>
+            </PickableItem>
+
+            {/* Eggs (3 eggs on tray) - PICKABLE */}
+            <PickableItem position={[-13.6, 0.96, -9.4]} itemType="egg">
+                {/* Egg tray */}
+                <Box args={[0.18, 0.02, 0.1]} position={[0, 0.01, 0]}>
+                    <meshStandardMaterial color="#D4C4A8" />
+                </Box>
+                {/* Egg 1 */}
+                <Sphere args={[0.04, 12, 12]} scale={[1, 1.4, 1]} position={[-0.05, 0.07, 0]}>
+                    <meshStandardMaterial color="#FFF8DC" roughness={0.5} />
+                </Sphere>
+                {/* Egg 2 */}
+                <Sphere args={[0.04, 12, 12]} scale={[1, 1.4, 1]} position={[0.05, 0.07, 0]}>
+                    <meshStandardMaterial color="#F5F5DC" roughness={0.5} />
+                </Sphere>
+            </PickableItem>
+
+            {/* Tea Packet (Tapal/Lipton style) - PICKABLE */}
+            <PickableItem position={[-13, 0.96, -9.4]} itemType="tea">
+                <Box args={[0.12, 0.18, 0.06]} position={[0, 0.09, 0]}>
+                    <meshStandardMaterial color="#8B0000" />
+                </Box>
+                {/* Gold label */}
+                <Box args={[0.1, 0.12, 0.001]} position={[0, 0.09, 0.031]}>
+                    <meshStandardMaterial color="#FFD700" metalness={0.3} />
+                </Box>
+            </PickableItem>
+
+            {/* Frying Pan (Karahi) - PICKABLE */}
+            <PickableItem position={[-12.3, 0.96, -9.4]} itemType="pan">
+                {/* Pan base */}
+                <Cylinder args={[0.18, 0.15, 0.06, 16]} position={[0, 0.03, 0]}>
+                    <meshStandardMaterial color="#1a1a1a" metalness={0.9} roughness={0.2} />
+                </Cylinder>
+                {/* Pan inner */}
+                <Cylinder args={[0.16, 0.13, 0.04, 16]} position={[0, 0.04, 0]}>
+                    <meshStandardMaterial color="#2a2a2a" metalness={0.8} />
+                </Cylinder>
+                {/* Pan handle */}
+                <Box args={[0.25, 0.025, 0.04]} position={[0.28, 0.04, 0]}>
+                    <meshStandardMaterial color="#1a1a1a" />
+                </Box>
+            </PickableItem>
+
+            {/* Roti/Chapati (Stack of 3) - PICKABLE */}
+            <PickableItem position={[-11.6, 0.96, -9.4]} itemType="roti">
+                {/* Roti 1 */}
+                <Cylinder args={[0.12, 0.12, 0.015, 20]} position={[0, 0.008, 0]}>
+                    <meshStandardMaterial color="#D4A574" roughness={0.9} />
+                </Cylinder>
+                {/* Roti 2 */}
+                <Cylinder args={[0.11, 0.11, 0.015, 20]} position={[0.01, 0.023, 0.01]}>
+                    <meshStandardMaterial color="#C49A6C" roughness={0.9} />
+                </Cylinder>
+                {/* Roti 3 */}
+                <Cylinder args={[0.1, 0.1, 0.015, 20]} position={[-0.01, 0.038, -0.01]}>
+                    <meshStandardMaterial color="#D4A574" roughness={0.9} />
+                </Cylinder>
+            </PickableItem>
+
             {/* === ITEMS ON KITCHEN ISLAND === */}
 
             {/* Coffee mug - PICKABLE */}
@@ -1798,23 +2049,21 @@ function GroundFloor() {
                 </Box>
             </PickableItem>
 
-            {/* Paper towel roll */}
-            <group position={[-11.5, 1.02, -6.3]}>
+            {/* Paper towel roll - PICKABLE */}
+            <PickableItem position={[-11.5, 1.02, -6.3]} itemType="tissue">
                 <Cylinder args={[0.05, 0.05, 0.2, 16]} rotation={[Math.PI / 2, 0, 0]}>
                     <meshStandardMaterial color="#FAFAFA" />
                 </Cylinder>
-                {/* Inner tube */}
                 <Cylinder args={[0.02, 0.02, 0.21, 8]} rotation={[Math.PI / 2, 0, 0]}>
                     <meshStandardMaterial color="#A1887F" />
                 </Cylinder>
-            </group>
+            </PickableItem>
 
-            {/* Plate with cookies/pastries */}
-            <group position={[-10.8, 1.02, -6.2]}>
+            {/* Cookie plate - PICKABLE */}
+            <PickableItem position={[-10.8, 1.02, -6.2]} itemType="cookies">
                 <Cylinder args={[0.1, 0.1, 0.015, 16]} position={[0, 0.008, 0]}>
                     <meshStandardMaterial color="#ECEFF1" />
                 </Cylinder>
-                {/* Cookies */}
                 <Cylinder args={[0.03, 0.03, 0.01, 10]} position={[-0.03, 0.02, 0]}>
                     <meshStandardMaterial color="#D4A574" roughness={0.8} />
                 </Cylinder>
@@ -1824,7 +2073,7 @@ function GroundFloor() {
                 <Cylinder args={[0.025, 0.025, 0.01, 10]} position={[0, 0.025, -0.02]}>
                     <meshStandardMaterial color="#8D6E63" roughness={0.8} />
                 </Cylinder>
-            </group>
+            </PickableItem>
 
             {/* Glass of water */}
             <group position={[-13.2, 1.02, -6.15]}>

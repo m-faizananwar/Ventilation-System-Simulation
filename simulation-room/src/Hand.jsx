@@ -71,6 +71,83 @@ export function Hand({ heldItem }) {
                         <meshStandardMaterial color="#FFFFFF" />
                     </Box>
                 );
+            case 'apple':
+                return (
+                    <Box args={[0.08, 0.08, 0.08]} position={[0, 0.3, 0]}>
+                        <meshStandardMaterial color="#C62828" />
+                    </Box>
+                );
+            case 'cereal':
+                return (
+                    <Box args={[0.06, 0.2, 0.14]} position={[0, 0.35, 0]}>
+                        <meshStandardMaterial color="#FFC107" />
+                    </Box>
+                );
+            case 'oil':
+                return (
+                    <Box args={[0.06, 0.15, 0.06]} position={[0, 0.3, 0]}>
+                        <meshStandardMaterial color="#FFEB3B" transparent opacity={0.8} />
+                    </Box>
+                );
+            case 'tissue':
+                return (
+                    <Box args={[0.08, 0.15, 0.08]} position={[0, 0.32, 0]}>
+                        <meshStandardMaterial color="#FAFAFA" />
+                    </Box>
+                );
+            case 'cookies':
+                return (
+                    <group position={[0, 0.28, 0]}>
+                        <Box args={[0.12, 0.02, 0.12]}>
+                            <meshStandardMaterial color="#ECEFF1" />
+                        </Box>
+                        <Box args={[0.04, 0.02, 0.04]} position={[0, 0.02, 0]}>
+                            <meshStandardMaterial color="#D4A574" />
+                        </Box>
+                    </group>
+                );
+            case 'kettle':
+                return (
+                    <group position={[0, 0.32, 0]}>
+                        <Box args={[0.1, 0.12, 0.1]}>
+                            <meshStandardMaterial color="#C0C0C0" metalness={0.8} />
+                        </Box>
+                    </group>
+                );
+            case 'pot':
+                return (
+                    <group position={[0, 0.3, 0]}>
+                        <Box args={[0.12, 0.1, 0.12]}>
+                            <meshStandardMaterial color="#B87333" metalness={0.7} />
+                        </Box>
+                    </group>
+                );
+            case 'egg':
+                return (
+                    <Box args={[0.06, 0.08, 0.06]} position={[0, 0.28, 0]}>
+                        <meshStandardMaterial color="#F5F5DC" />
+                    </Box>
+                );
+            case 'tea':
+                return (
+                    <Box args={[0.06, 0.1, 0.04]} position={[0, 0.3, 0]}>
+                        <meshStandardMaterial color="#8B0000" />
+                    </Box>
+                );
+            case 'pan':
+                return (
+                    <group position={[0, 0.26, 0]}>
+                        <Box args={[0.15, 0.02, 0.15]}>
+                            <meshStandardMaterial color="#2F2F2F" metalness={0.8} />
+                        </Box>
+                    </group>
+                );
+            case 'roti':
+                return (
+                    <Box args={[0.12, 0.01, 0.12]} position={[0, 0.26, 0]}>
+                        <meshStandardMaterial color="#D4A574" />
+                    </Box>
+                );
             default:
                 return (
                     <Box args={[0.1, 0.1, 0.1]} position={[0, 0.3, 0]}>
