@@ -958,36 +958,26 @@ function GroundFloor() {
                 </Box>
             </RigidBody>
 
-            {/* === KITCHEN (North-West Corner - U-Shape) === */}
-            {/* North Wall (Window view) - Sink */}
-            <Sink position={[-8, 0, -9.5]} />
-            <GlassWindow position={[-8, 1.8, -10]} args={[2, 1.5, 0.1]} />
+            {/* === KITCHEN (North-West Corner - L-Shape against walls) === */}
 
-            {/* West Wall (Cooking) - Stove */}
-            <Stove position={[-9.5, 0, -7]} />
-            <RangeHood position={[-9.5, 2, -7]} />
+            {/* --- KITCHEN BACK WALL (North Wall at z=-10) - Single solid wall --- */}
+            <Wall position={[-12, 1.75, -10]} args={[12, 3.5, 0.2]} />
 
-            {/* South Wall (Storage) - Fridge & Pantry */}
-            <Refrigerator position={[-9.5, 0, -4]} />
-            <RigidBody type="fixed" position={[-9.5, 0, -2]}>
-                <Box args={[0.6, 2, 0.6]} position={[0, 1, 0]}>
-                    <meshStandardMaterial color="#5C4033" />
-                </Box>
-            </RigidBody>
+            {/* --- SIDE WALL (West Wall at x=-18) - Stove & Refrigerator --- */}
+            {/* Refrigerator - placed in corner against west wall */}
+            <Refrigerator position={[-17.2, 0, -9]} />
 
-            {/* Countertops */}
-            <KitchenCounter position={[-8, 0.45, -9]} args={[3, 0.9, 0.6]} />
-            <KitchenCounter position={[-9.6, 0.45, -6]} args={[0.6, 0.9, 2]} />
+            {/* Stove with Range Hood - against west wall */}
+            <Stove position={[-17.2, 0, -6.5]} />
+            <RangeHood position={[-17.5, 2.2, -6.5]} />
+            <meshStandardMaterial color="#888" metalness={0.8} />
+        </Cylinder>
+            </RigidBody >
 
-            {/* Countertop Appliances */}
-            <Box args={[0.35, 0.25, 0.3]} position={[-7, 1.02, -9]}>
-                <meshStandardMaterial color="#333" />
-            </Box>
-
-            {/* === GUEST BEDROOM (East Wing) === */}
-            {/* Only the outer east wall - entrance is from living room's east wall */}
-            {/* Outer Walls - Expanded to x=\u00B114 */}
-            {/* Outer Walls - Expanded to x=\u00B118 */}
+        {/* === GUEST BEDROOM (East Wing) === */ }
+    {/* Only the outer east wall - entrance is from living room's east wall */ }
+    {/* Outer Walls - Expanded to x=\u00B114 */ }
+    {/* Outer Walls - Expanded to x=\u00B118 */ }
             <Wall position={[18, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
 
             <Bed position={[12, 0, -3]} size="queen" color="#3366AA" />
@@ -997,7 +987,7 @@ function GroundFloor() {
             <Desk position={[10, 0, -8.5]} rotation={[0, -Math.PI / 2, 0]} />
             <Chair position={[10.8, 0, -8.5]} rotation={[0, Math.PI / 2, 0]} />
 
-            {/* === GUEST BATHROOM (Near Guest Bedroom) === */}
+    {/* === GUEST BATHROOM (Near Guest Bedroom) === */ }
             <Wall position={[8, 1.75, -9]} args={[4, 3.5, 0.2]} />
             <Door position={[6.5, 1.1, -9]} args={[0.8, 2.2, 0.1]} />
 
@@ -1005,19 +995,19 @@ function GroundFloor() {
             <Vanity position={[7, 0, -9.5]} />
             <ShowerCubicle position={[8.5, 0, -9.5]} />
 
-            {/* CEILING - Expanded */}
-            <Floor position={[0, 3.6, -2.5]} args={[36, 15]} color="#F5F5F0" />
+    {/* CEILING - Expanded */ }
+    <Floor position={[0, 3.6, -2.5]} args={[36, 15]} color="#F5F5F0" />
 
-            {/* ===== CEILING LIGHTS ===== */}
-            <CeilingLight position={[0, 3.55, 3.5]} intensity={1} /> {/* Foyer */}
-            <CeilingLight position={[0, 3.55, -4]} intensity={1.5} /> {/* Living Room */}
-            <CeilingLight position={[-3, 3.55, 0]} intensity={1.2} /> {/* Dining (chandelier exists but add ambient) */}
-            <CeilingLight position={[-8, 3.55, -7]} intensity={1} /> {/* Kitchen */}
-            <CeilingLight position={[9, 3.55, -4]} intensity={0.8} /> {/* Guest Bedroom */}
+    {/* ===== CEILING LIGHTS ===== */ }
+    <CeilingLight position={[0, 3.55, 3.5]} intensity={1} /> {/* Foyer */ }
+    <CeilingLight position={[0, 3.55, -4]} intensity={1.5} /> {/* Living Room */ }
+    <CeilingLight position={[-3, 3.55, 0]} intensity={1.2} /> {/* Dining (chandelier exists but add ambient) */ }
+    <CeilingLight position={[-14, 3.55, -7]} intensity={1.2} /> {/* Kitchen */ }
+    <CeilingLight position={[9, 3.55, -4]} intensity={0.8} /> {/* Guest Bedroom */ }
 
-            {/* STAIRS to First Floor */}
-            <Stairs position={[-4, 0, 3]} direction="up" steps={11} />
-        </group>
+    {/* STAIRS to First Floor */ }
+    <Stairs position={[-4, 0, 3]} direction="up" steps={11} />
+        </group >
     );
 }
 
