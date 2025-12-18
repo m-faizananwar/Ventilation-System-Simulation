@@ -7,16 +7,19 @@ export function Hand({ heldItem }) {
     const handRef = useRef();
     const [isSwinging, setIsSwinging] = useState(false);
     const swingProgress = useRef(0);
-    const idleTime = useRef(0);
+    const frameCounter = useRef(0);
 
-    // Idle bob and swing animation
+    // Idle bob and swing animation - optimized
     useFrame((state, delta) => {
         if (!handRef.current) return;
 
-        idleTime.current += delta;
+        // Only update animation every 2 frames
+        frameCounter.current++;
+        if (frameCounter.current < 2 && !isSwinging) return;
+        frameCounter.current = 0;
 
-        // Subtle idle bobbing
-        const bobY = Math.sin(idleTime.current * 1.5) * 0.01;
+        // Subtle idle bobbing using clock time
+        const bobY = Math.sin(state.clock.elapsedTime * 1.5) * 0.01;
 
         // Swing animation when picking up
         if (isSwinging) {

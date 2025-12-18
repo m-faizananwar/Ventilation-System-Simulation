@@ -160,49 +160,51 @@ export const InteractiveDoor = ({
     const doorRef = useRef();
     const groupRef = useRef();
     const doorMeshRef = useRef();
-    const { camera, raycaster, scene } = useThree();
+    const { camera, raycaster } = useThree();
     const [, getKeys] = useKeyboardControls();
     const lastInteract = useRef(false);
+    const frameCounter = useRef(0);
+    const doorPosCache = useRef(new THREE.Vector3());
 
-    // Check proximity, look direction, and handle E key
-    useFrame(() => {
+    // Combined useFrame for proximity check and animation
+    useFrame((_, delta) => {
         if (!groupRef.current || !doorMeshRef.current) return;
 
-        const doorPos = groupRef.current.getWorldPosition(new THREE.Vector3());
-        const distance = camera.position.distanceTo(doorPos);
+        // Throttle proximity checks to every 8 frames
+        frameCounter.current++;
+        const shouldCheckProximity = frameCounter.current >= 8;
+        if (shouldCheckProximity) frameCounter.current = 0;
 
-        // Check if player is nearby
-        const isClose = distance < interactionDistance;
+        if (shouldCheckProximity) {
+            groupRef.current.getWorldPosition(doorPosCache.current);
+            const distance = camera.position.distanceTo(doorPosCache.current);
+            const isClose = distance < interactionDistance;
 
-        // Check if player is looking at the door (raycast from camera center)
-        let isLookingAtDoor = false;
-        if (isClose) {
-            raycaster.setFromCamera({ x: 0, y: 0 }, camera);
-            const intersects = raycaster.intersectObject(doorMeshRef.current, true);
-            isLookingAtDoor = intersects.length > 0;
+            // Only raycast if close enough
+            let isLookingAtDoor = false;
+            if (isClose) {
+                raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+                const intersects = raycaster.intersectObject(doorMeshRef.current, false);
+                isLookingAtDoor = intersects.length > 0;
+            }
+
+            const nowNearby = isClose && isLookingAtDoor;
+            if (nowNearby !== isNearby) setIsNearby(nowNearby);
         }
 
-        const wasNearby = isNearby;
-        const nowNearby = isClose && isLookingAtDoor;
-
-        if (nowNearby !== wasNearby) {
-            setIsNearby(nowNearby);
-        }
-
-        // Handle E key press - only when looking at door
+        // Handle E key press
         const { interact } = getKeys();
-        if (nowNearby && interact && !lastInteract.current) {
+        if (isNearby && interact && !lastInteract.current) {
             setIsOpen(prev => !prev);
             if (onOpenChange) onOpenChange(!isOpen);
         }
         lastInteract.current = interact;
-    });
 
-    // Animate door rotation
-    useFrame((_, delta) => {
-        if (!doorRef.current) return;
-        const targetRotation = isOpen ? -Math.PI / 2 : 0;
-        doorRef.current.rotation.y += (targetRotation - doorRef.current.rotation.y) * delta * 5;
+        // Animate door rotation
+        if (doorRef.current) {
+            const targetRotation = isOpen ? -Math.PI / 2 : 0;
+            doorRef.current.rotation.y += (targetRotation - doorRef.current.rotation.y) * delta * 5;
+        }
     });
 
     return (
@@ -326,32 +328,26 @@ export const CrownMolding = ({ position, length, rotation = [0, 0, 0], color = T
     );
 };
 
-// Ceiling Light Fixture
+// Ceiling Light Fixture - Optimized
 export const CeilingLight = ({ position, intensity = 1 }) => {
     return (
         <group position={position}>
-            {/* Base plate */}
-            <Cylinder args={[0.15, 0.15, 0.03, 16]} position={[0, 0, 0]}>
-                <meshStandardMaterial color="#888" metalness={0.6} roughness={0.3} />
-            </Cylinder>
-            {/* Light bulb cover */}
-            <mesh position={[0, -0.15, 0]}>
-                <sphereGeometry args={[0.12, 16, 16]} />
-                <meshStandardMaterial
-                    color="#FFFEF0"
-                    emissive="#FFF8DC"
-                    emissiveIntensity={0.8}
-                    transparent
-                    opacity={0.9}
-                />
+            {/* Base plate - simplified */}
+            <mesh position={[0, 0, 0]}>
+                <cylinderGeometry args={[0.15, 0.15, 0.03, 8]} />
+                <meshBasicMaterial color="#888" />
             </mesh>
-            {/* Actual light */}
+            {/* Light bulb cover - simplified */}
+            <mesh position={[0, -0.15, 0]}>
+                <sphereGeometry args={[0.12, 8, 8]} />
+                <meshBasicMaterial color="#FFFEF0" />
+            </mesh>
+            {/* Actual light - no shadow for performance */}
             <pointLight
                 position={[0, -0.2, 0]}
-                intensity={intensity}
-                distance={10}
+                intensity={intensity * 0.8}
+                distance={8}
                 color="#FFF8DC"
-                castShadow
             />
         </group>
     );

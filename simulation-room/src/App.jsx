@@ -131,9 +131,10 @@ function App() {
             >
                 <div id="canvas-container" style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
                     <Canvas
-                        camera={{ fov: 75, position: [0, 2, 20], near: 0.1, far: 1000 }}
-                        shadows
-                        gl={{ antialias: true, alpha: false }}
+                        camera={{ fov: 75, position: [0, 2, 20], near: 0.1, far: 500 }}
+                        shadows="soft"
+                        gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
+                        dpr={[0.75, 1]}
                     >
                         <color attach="background" args={['#87CEEB']} />
 
@@ -143,13 +144,13 @@ function App() {
                             position={[50, 50, 25]}
                             intensity={1.2}
                             castShadow
-                            shadow-mapSize-width={2048}
-                            shadow-mapSize-height={2048}
-                            shadow-camera-far={200}
-                            shadow-camera-left={-50}
-                            shadow-camera-right={50}
-                            shadow-camera-top={50}
-                            shadow-camera-bottom={-50}
+                            shadow-mapSize-width={512}
+                            shadow-mapSize-height={512}
+                            shadow-camera-far={100}
+                            shadow-camera-left={-30}
+                            shadow-camera-right={30}
+                            shadow-camera-top={30}
+                            shadow-camera-bottom={-30}
                         />
                         <hemisphereLight args={['#87CEEB', '#3A5F0B', 0.5]} />
 

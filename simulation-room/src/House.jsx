@@ -30,39 +30,36 @@ const PickableItem = ({ children, position: initialPosition, itemType, pickupDis
     const burnTime = useRef(0);
     const isNearbyRef = useRef(false);
     const isLookingAtRef = useRef(false);
-    const hintUpdateCounter = useRef(0);
+    const frameCounter = useRef(0);
 
     useFrame((state, delta) => {
         if (isDestroyed) return;
         if (!groupRef.current || isPickedUp) return;
+
+        // Throttle expensive calculations to every 5 frames
+        frameCounter.current++;
+        if (frameCounter.current < 5 && !isBurning) return;
+        frameCounter.current = 0;
 
         // Check distance to player based on current position
         const itemPos = new THREE.Vector3(...currentPosition);
         const distance = camera.position.distanceTo(itemPos);
         isNearbyRef.current = distance < pickupDistance;
 
-        // Check if player is looking at this item (crosshair pointing at it)
+        // Check if player is looking at this item (simplified)
         if (isNearbyRef.current) {
             const cameraDirection = new THREE.Vector3();
             camera.getWorldDirection(cameraDirection);
-
             const toItem = new THREE.Vector3().subVectors(itemPos, camera.position).normalize();
-            const dotProduct = cameraDirection.dot(toItem);
-
-            // dotProduct > 0.95 means camera is pointing within ~18 degrees of item
-            isLookingAtRef.current = dotProduct > 0.95;
+            isLookingAtRef.current = cameraDirection.dot(toItem) > 0.95;
         } else {
             isLookingAtRef.current = false;
         }
 
-        // Update hint visibility less frequently (every 10 frames)
-        hintUpdateCounter.current++;
-        if (hintUpdateCounter.current >= 10) {
-            hintUpdateCounter.current = 0;
-            const shouldShow = isNearbyRef.current && isLookingAtRef.current && !isBurning;
-            if (shouldShow !== showHint) {
-                setShowHint(shouldShow);
-            }
+        // Update hint visibility
+        const shouldShow = isNearbyRef.current && isLookingAtRef.current && !isBurning;
+        if (shouldShow !== showHint) {
+            setShowHint(shouldShow);
         }
 
         // Check for G key press - only pickup if looking at item and nothing else is held
@@ -412,7 +409,7 @@ const DiningChair = ({ position, rotation = [0, 0, 0] }) => (
     </group>
 );
 
-// Animated TV component with screen effects
+// Animated TV component with screen effects - Optimized
 const AnimatedTV = ({ position, rotation = [0, 0, 0] }) => {
     const [isOn, setIsOn] = useState(true);
     const [isNearby, setIsNearby] = useState(false);
@@ -421,45 +418,47 @@ const AnimatedTV = ({ position, rotation = [0, 0, 0] }) => {
     const { camera, raycaster } = useThree();
     const [, getKeys] = useKeyboardControls();
     const lastInteract = useRef(false);
-    const timeRef = useRef(0);
+    const frameCounter = useRef(0);
+    const tvPosCache = useRef(new THREE.Vector3());
 
     useFrame((state, delta) => {
         if (!groupRef.current) return;
 
-        const tvPos = groupRef.current.getWorldPosition(new THREE.Vector3());
-        const distance = camera.position.distanceTo(tvPos);
-        const isClose = distance < 4;
+        // Throttle proximity checks to every 10 frames
+        frameCounter.current++;
+        const shouldCheck = frameCounter.current >= 10;
+        if (shouldCheck) frameCounter.current = 0;
 
-        // Raycast check
-        let isLookingAt = false;
-        if (isClose && screenRef.current) {
-            raycaster.setFromCamera({ x: 0, y: 0 }, camera);
-            const intersects = raycaster.intersectObject(screenRef.current, true);
-            isLookingAt = intersects.length > 0;
+        if (shouldCheck) {
+            groupRef.current.getWorldPosition(tvPosCache.current);
+            const distance = camera.position.distanceTo(tvPosCache.current);
+            const isClose = distance < 4;
+
+            let isLookingAt = false;
+            if (isClose && screenRef.current) {
+                raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+                const intersects = raycaster.intersectObject(screenRef.current, false);
+                isLookingAt = intersects.length > 0;
+            }
+
+            const nowNearby = isClose && isLookingAt;
+            if (nowNearby !== isNearby) setIsNearby(nowNearby);
         }
-
-        const nowNearby = isClose && isLookingAt;
-        if (nowNearby !== isNearby) setIsNearby(nowNearby);
 
         // Handle E key
         const { interact } = getKeys();
-        if (nowNearby && interact && !lastInteract.current) {
+        if (isNearby && interact && !lastInteract.current) {
             setIsOn(prev => !prev);
         }
         lastInteract.current = interact;
 
-        // Animate screen colors when on
-        if (isOn && screenRef.current && screenRef.current.material) {
-            timeRef.current += delta;
-            const t = timeRef.current;
-
-            // Color cycling effect (simulating video content)
-            const r = Math.sin(t * 0.7) * 0.3 + 0.4;
-            const g = Math.sin(t * 0.9 + 1) * 0.3 + 0.4;
-            const b = Math.sin(t * 1.1 + 2) * 0.3 + 0.5;
-
+        // Simplified screen animation (less frequent updates)
+        if (isOn && screenRef.current && screenRef.current.material && frameCounter.current === 0) {
+            const t = state.clock.elapsedTime;
+            const r = Math.sin(t * 0.5) * 0.3 + 0.4;
+            const g = Math.sin(t * 0.7) * 0.3 + 0.4;
+            const b = Math.sin(t * 0.9) * 0.3 + 0.5;
             screenRef.current.material.emissive.setRGB(r, g, b);
-            screenRef.current.material.emissiveIntensity = 0.5 + Math.sin(t * 15) * 0.1; // Subtle flicker
         }
     });
 
@@ -522,7 +521,7 @@ const Bookshelf = ({ position, rotation = [0, 0, 0] }) => (
     </RigidBody>
 );
 
-// Interactive Refrigerator with opening doors and food inside
+// Interactive Refrigerator with opening doors and food inside - Optimized
 const InteractiveRefrigerator = ({ position, rotation = [0, 0, 0], interactionDistance = 3 }) => {
     const [freezerOpen, setFreezerOpen] = useState(false);
     const [fridgeOpen, setFridgeOpen] = useState(false);
@@ -534,6 +533,8 @@ const InteractiveRefrigerator = ({ position, rotation = [0, 0, 0], interactionDi
     const { camera, raycaster } = useThree();
     const [, getKeys] = useKeyboardControls();
     const lastInteract = useRef(false);
+    const frameCounter = useRef(0);
+    const posCache = useRef(new THREE.Vector3());
 
     // Handle keyboard input for individual door control
     useEffect(() => {
@@ -554,26 +555,32 @@ const InteractiveRefrigerator = ({ position, rotation = [0, 0, 0], interactionDi
     useFrame((state, delta) => {
         if (!groupRef.current || !fridgeRef.current) return;
 
-        const fridgePos = groupRef.current.getWorldPosition(new THREE.Vector3());
-        const distance = camera.position.distanceTo(fridgePos);
+        // Throttle proximity checks to every 10 frames
+        frameCounter.current++;
+        const shouldCheck = frameCounter.current >= 10;
+        if (shouldCheck) frameCounter.current = 0;
 
-        const isClose = distance < interactionDistance;
+        if (shouldCheck) {
+            groupRef.current.getWorldPosition(posCache.current);
+            const distance = camera.position.distanceTo(posCache.current);
+            const isClose = distance < interactionDistance;
 
-        let isLookingAt = false;
-        if (isClose) {
-            raycaster.setFromCamera({ x: 0, y: 0 }, camera);
-            const intersects = raycaster.intersectObject(fridgeRef.current, true);
-            isLookingAt = intersects.length > 0;
-        }
+            let isLookingAt = false;
+            if (isClose) {
+                raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+                const intersects = raycaster.intersectObject(fridgeRef.current, false);
+                isLookingAt = intersects.length > 0;
+            }
 
-        const nowNearby = isClose && isLookingAt;
-        if (nowNearby !== isNearby) {
-            setIsNearby(nowNearby);
+            const nowNearby = isClose && isLookingAt;
+            if (nowNearby !== isNearby) {
+                setIsNearby(nowNearby);
+            }
         }
 
         // Handle E key press - toggle both doors
         const { interact } = getKeys();
-        if (nowNearby && interact && !lastInteract.current) {
+        if (isNearby && interact && !lastInteract.current) {
             const bothOpen = freezerOpen && fridgeOpen;
             setFreezerOpen(!bothOpen);
             setFridgeOpen(!bothOpen);
@@ -710,104 +717,57 @@ const InteractiveRefrigerator = ({ position, rotation = [0, 0, 0], interactionDi
                 <group>
                     {/* White interior back */}
                     <Box args={[0.78, 1.4, 0.02]} position={[0, 0.78, -0.3]}>
-                        <meshStandardMaterial color="#F8F8F8" />
-                    </Box>
-                    {/* White interior sides */}
-                    <Box args={[0.02, 1.4, 0.5]} position={[-0.38, 0.78, 0]}>
-                        <meshStandardMaterial color="#F5F5F5" />
-                    </Box>
-                    <Box args={[0.02, 1.4, 0.5]} position={[0.38, 0.78, 0]}>
-                        <meshStandardMaterial color="#F5F5F5" />
+                        <meshBasicMaterial color="#F8F8F8" />
                     </Box>
 
-                    {/* Glass shelves */}
+                    {/* Glass shelves - simplified */}
                     <Box args={[0.72, 0.015, 0.45]} position={[0, 0.35, -0.05]}>
-                        <meshStandardMaterial color="#D0E8F0" transparent opacity={0.4} />
+                        <meshBasicMaterial color="#D0E8F0" transparent opacity={0.4} />
                     </Box>
                     <Box args={[0.72, 0.015, 0.45]} position={[0, 0.75, -0.05]}>
-                        <meshStandardMaterial color="#D0E8F0" transparent opacity={0.4} />
+                        <meshBasicMaterial color="#D0E8F0" transparent opacity={0.4} />
                     </Box>
                     <Box args={[0.72, 0.015, 0.45]} position={[0, 1.15, -0.05]}>
-                        <meshStandardMaterial color="#D0E8F0" transparent opacity={0.4} />
+                        <meshBasicMaterial color="#D0E8F0" transparent opacity={0.4} />
                     </Box>
 
-                    {/* ===== BOTTOM SHELF ITEMS ===== */}
-                    {/* Milk carton - realistic with label */}
-                    <group position={[-0.25, 0.5, -0.1]}>
-                        <Box args={[0.08, 0.24, 0.08]}>
-                            <meshStandardMaterial color="#FFFFFF" />
-                        </Box>
-                        <Box args={[0.075, 0.04, 0.075]} position={[0, 0.13, 0]}>
-                            <meshStandardMaterial color="#1976D2" />
-                        </Box>
-                        <Box args={[0.06, 0.08, 0.005]} position={[0, 0, 0.04]}>
-                            <meshStandardMaterial color="#42A5F5" />
-                        </Box>
-                    </group>
+                    {/* Simplified fridge items - fewer objects */}
+                    {/* Milk carton */}
+                    <Box args={[0.08, 0.24, 0.08]} position={[-0.25, 0.5, -0.1]}>
+                        <meshBasicMaterial color="#FFFFFF" />
+                    </Box>
 
                     {/* Orange juice bottle */}
-                    <group position={[-0.05, 0.47, -0.1]}>
-                        <Cylinder args={[0.04, 0.04, 0.2, 12]}>
-                            <meshStandardMaterial color="#FF9800" transparent opacity={0.8} />
-                        </Cylinder>
-                        <Cylinder args={[0.025, 0.025, 0.04, 12]} position={[0, 0.12, 0]}>
-                            <meshStandardMaterial color="#E65100" />
-                        </Cylinder>
-                    </group>
+                    <mesh position={[-0.05, 0.47, -0.1]}>
+                        <cylinderGeometry args={[0.04, 0.04, 0.2, 6]} />
+                        <meshBasicMaterial color="#FF9800" />
+                    </mesh>
 
                     {/* Egg carton */}
-                    <group position={[0.2, 0.4, -0.08]}>
-                        <Box args={[0.18, 0.06, 0.1]}>
-                            <meshStandardMaterial color="#D7CCC8" />
-                        </Box>
-                        {/* Individual eggs */}
-                        {[[-0.05, 0], [0.05, 0], [-0.05, 0.03], [0.05, 0.03]].map(([x, z], i) => (
-                            <Sphere key={i} args={[0.025, 8, 8]} position={[x, 0.04, z - 0.015]}>
-                                <meshStandardMaterial color="#FFF8E1" />
-                            </Sphere>
-                        ))}
-                    </group>
-
-                    {/* ===== MIDDLE SHELF ITEMS ===== */}
-                    {/* Lettuce/cabbage */}
-                    <Sphere args={[0.08, 12, 12]} position={[-0.22, 0.86, -0.1]}>
-                        <meshStandardMaterial color="#81C784" roughness={0.8} />
-                    </Sphere>
-
-                    {/* Tomatoes */}
-                    <Sphere args={[0.05, 12, 12]} position={[0, 0.82, -0.08]}>
-                        <meshStandardMaterial color="#E53935" roughness={0.4} />
-                    </Sphere>
-                    <Sphere args={[0.045, 12, 12]} position={[0.12, 0.81, -0.12]}>
-                        <meshStandardMaterial color="#EF5350" roughness={0.4} />
-                    </Sphere>
-
-                    {/* Cucumber */}
-                    <Cylinder args={[0.025, 0.025, 0.15, 8]} position={[0.25, 0.82, -0.1]} rotation={[0, 0, Math.PI / 2]}>
-                        <meshStandardMaterial color="#388E3C" roughness={0.6} />
-                    </Cylinder>
-
-                    {/* ===== TOP SHELF ITEMS ===== */}
-                    {/* Apples */}
-                    <Sphere args={[0.055, 12, 12]} position={[-0.2, 1.22, -0.1]}>
-                        <meshStandardMaterial color="#C62828" roughness={0.3} />
-                    </Sphere>
-                    <Sphere args={[0.055, 12, 12]} position={[-0.05, 1.22, -0.08]}>
-                        <meshStandardMaterial color="#43A047" roughness={0.3} />
-                    </Sphere>
-
-                    {/* Orange */}
-                    <Sphere args={[0.055, 12, 12]} position={[0.1, 1.22, -0.1]}>
-                        <meshStandardMaterial color="#FB8C00" roughness={0.5} />
-                    </Sphere>
-
-                    {/* Butter/cheese block */}
-                    <Box args={[0.1, 0.04, 0.06]} position={[0.25, 1.19, -0.08]}>
-                        <meshStandardMaterial color="#FFE082" />
+                    <Box args={[0.18, 0.06, 0.1]} position={[0.2, 0.4, -0.08]}>
+                        <meshBasicMaterial color="#D7CCC8" />
                     </Box>
 
-                    {/* Subtle interior light - not too bright */}
-                    <pointLight position={[0, 1.3, -0.1]} color="#FFFEF0" intensity={1.5} distance={1.5} />
+                    {/* Lettuce - simplified */}
+                    <mesh position={[-0.22, 0.86, -0.1]}>
+                        <sphereGeometry args={[0.08, 6, 6]} />
+                        <meshBasicMaterial color="#81C784" />
+                    </mesh>
+
+                    {/* Tomato */}
+                    <mesh position={[0, 0.82, -0.08]}>
+                        <sphereGeometry args={[0.05, 6, 6]} />
+                        <meshBasicMaterial color="#E53935" />
+                    </mesh>
+
+                    {/* Apple */}
+                    <mesh position={[-0.2, 1.22, -0.1]}>
+                        <sphereGeometry args={[0.055, 6, 6]} />
+                        <meshBasicMaterial color="#C62828" />
+                    </mesh>
+
+                    {/* Subtle interior light - reduced intensity */}
+                    <pointLight position={[0, 1.3, -0.1]} color="#FFFEF0" intensity={0.8} distance={1} />
                 </group>
             )}
         </group>
@@ -857,52 +817,53 @@ const InteractiveStove = ({ position, rotation = [0, 0, 0], interactionDistance 
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [showMenu]);
 
+    const frameCounter = useRef(0);
+    const posCache = useRef(new THREE.Vector3());
+
     useFrame((state, delta) => {
         if (!groupRef.current || !stoveRef.current) return;
 
-        const stovePos = groupRef.current.getWorldPosition(new THREE.Vector3());
-        const distance = camera.position.distanceTo(stovePos);
+        // Throttle proximity checks to every 10 frames
+        frameCounter.current++;
+        const shouldCheck = frameCounter.current >= 10;
+        if (shouldCheck) frameCounter.current = 0;
 
-        const isClose = distance < interactionDistance;
+        if (shouldCheck) {
+            groupRef.current.getWorldPosition(posCache.current);
+            const distance = camera.position.distanceTo(posCache.current);
+            const isClose = distance < interactionDistance;
 
-        let isLookingAt = false;
-        if (isClose) {
-            raycaster.setFromCamera({ x: 0, y: 0 }, camera);
-            const intersects = raycaster.intersectObject(stoveRef.current, true);
-            isLookingAt = intersects.length > 0;
-        }
+            let isLookingAt = false;
+            if (isClose) {
+                raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+                const intersects = raycaster.intersectObject(stoveRef.current, false);
+                isLookingAt = intersects.length > 0;
+            }
 
-        const wasNearby = isNearby;
-        const nowNearby = isClose && isLookingAt;
-
-        if (nowNearby !== wasNearby) {
-            setIsNearby(nowNearby);
-            setShowMenu(nowNearby);
+            const nowNearby = isClose && isLookingAt;
+            if (nowNearby !== isNearby) {
+                setIsNearby(nowNearby);
+                setShowMenu(nowNearby);
+            }
         }
 
         // Handle E key press - toggle all burners
         const { interact } = getKeys();
-        if (nowNearby && interact && !lastInteract.current) {
+        if (isNearby && interact && !lastInteract.current) {
             const allOn = burnersOn.every(b => b);
             setBurnersOn(allOn ? [false, false, false, false] : [true, true, true, true]);
         }
         lastInteract.current = interact;
 
-        // Animate flames when burners are on
-        timeRef.current += delta * 10;
-        const t = timeRef.current;
-
-        burnersOn.forEach((isOn, i) => {
-            if (isOn && flameRefs[i].current) {
-                // Flickering flame animation
-                flameRefs[i].current.scale.x = 1 + Math.sin(t * (4 + i * 0.5)) * 0.15;
-                flameRefs[i].current.scale.y = 1 + Math.sin(t * (5 + i * 0.3)) * 0.15;
-                flameRefs[i].current.scale.z = 1 + Math.sin(t * (4.5 + i * 0.4)) * 0.2;
-            }
-            if (isOn && lightRefs[i].current) {
-                lightRefs[i].current.intensity = 1.5 + Math.sin(t * (6 + i)) * 0.5;
-            }
-        });
+        // Animate flames when burners are on (simplified - only when visible)
+        if (burnersOn.some(b => b)) {
+            const t = state.clock.elapsedTime * 10;
+            burnersOn.forEach((isOn, i) => {
+                if (isOn && flameRefs[i].current) {
+                    flameRefs[i].current.scale.setScalar(1 + Math.sin(t + i) * 0.15);
+                }
+            });
+        }
     });
 
     // Stove control panel effect

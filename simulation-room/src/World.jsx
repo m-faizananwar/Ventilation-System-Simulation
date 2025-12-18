@@ -7,47 +7,18 @@ import * as THREE from 'three';
 function Tree({ position }) {
     return (
         <group position={position}>
-            {/* Trunk */}
+            {/* Trunk - simplified */}
             <RigidBody type="fixed" colliders="cuboid">
-                <mesh position={[0, 2, 0]} castShadow receiveShadow>
-                    <cylinderGeometry args={[0.4, 0.5, 4, 12]} />
-                    <meshStandardMaterial
-                        color="#4A3728"
-                        roughness={0.9}
-                        normalScale={new THREE.Vector2(0.5, 0.5)}
-                    />
+                <mesh position={[0, 2, 0]}>
+                    <cylinderGeometry args={[0.4, 0.5, 4, 6]} />
+                    <meshBasicMaterial color="#4A3728" />
                 </mesh>
             </RigidBody>
 
-            {/* Bark texture detail */}
-            {[1, 2, 3].map((y, i) => (
-                <mesh key={i} position={[0, y, 0]}>
-                    <torusGeometry args={[0.45, 0.05, 8, 12]} />
-                    <meshStandardMaterial color="#3A2718" roughness={1} />
-                </mesh>
-            ))}
-
-            {/* Foliage - Multiple layers for realism */}
-            <mesh position={[0, 5, 0]} castShadow>
-                <coneGeometry args={[2.5, 3, 8]} />
-                <meshStandardMaterial
-                    color="#2D5016"
-                    roughness={0.9}
-                />
-            </mesh>
-            <mesh position={[0, 6.5, 0]} castShadow>
-                <coneGeometry args={[2, 2.5, 8]} />
-                <meshStandardMaterial
-                    color="#3A6B1E"
-                    roughness={0.85}
-                />
-            </mesh>
-            <mesh position={[0, 7.5, 0]} castShadow>
-                <coneGeometry args={[1.5, 2, 8]} />
-                <meshStandardMaterial
-                    color="#4A8226"
-                    roughness={0.8}
-                />
+            {/* Foliage - Single layer for performance */}
+            <mesh position={[0, 6, 0]}>
+                <coneGeometry args={[2.5, 5, 6]} />
+                <meshBasicMaterial color="#2D5016" />
             </mesh>
         </group>
     );
@@ -79,38 +50,25 @@ function StreetLamp({ position }) {
                 />
             </mesh>
 
-            {/* Point Light */}
+            {/* Point Light - no shadow for performance */}
             <pointLight
                 position={[0, 5, 0]}
                 color="#FFF8DC"
-                intensity={2}
-                distance={15}
-                castShadow
-                shadow-mapSize-width={1024}
-                shadow-mapSize-height={1024}
+                intensity={1.5}
+                distance={12}
             />
         </group>
     );
 }
 
-// Realistic Bushes
+// Simplified Bushes
 function Bush({ position, scale = 1 }) {
     return (
         <group position={position} scale={scale}>
-            {[0, 1, 2].map((i) => {
-                const angle = (i * Math.PI * 2) / 3;
-                const radius = 0.3;
-                return (
-                    <mesh
-                        key={i}
-                        position={[Math.cos(angle) * radius, 0.3, Math.sin(angle) * radius]}
-                        castShadow
-                    >
-                        <sphereGeometry args={[0.5, 12, 12]} />
-                        <meshStandardMaterial color="#2D5016" roughness={0.95} />
-                    </mesh>
-                );
-            })}
+            <mesh position={[0, 0.3, 0]}>
+                <sphereGeometry args={[0.6, 6, 6]} />
+                <meshBasicMaterial color="#2D5016" />
+            </mesh>
         </group>
     );
 }
@@ -288,11 +246,11 @@ export function World(props) {
             <Stars
                 radius={100}
                 depth={50}
-                count={5000}
+                count={1000}
                 factor={4}
                 saturation={0}
                 fade
-                speed={1}
+                speed={0}
             />
 
             {/* Ambient Clouds */}
