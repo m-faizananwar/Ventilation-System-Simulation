@@ -1,11 +1,12 @@
 import React, { Suspense, useState, useEffect, createContext, useContext } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment, KeyboardControls } from '@react-three/drei';
 import { House } from './House';
 import { World } from './World';
 import { Player } from './Player';
 import './App.css';
 import { Physics } from '@react-three/rapier';
+import { Hand } from './Hand';
 
 // Create context for interaction state
 export const InteractionContext = createContext({
@@ -17,6 +18,26 @@ export const InteractionContext = createContext({
 });
 
 export const useInteraction = () => useContext(InteractionContext);
+
+// Hand overlay that follows camera for first-person view
+function HandOverlay({ heldItem }) {
+    const { camera } = useThree();
+    const groupRef = React.useRef();
+
+    useFrame(() => {
+        if (groupRef.current) {
+            // Position hand relative to camera
+            groupRef.current.position.copy(camera.position);
+            groupRef.current.rotation.copy(camera.rotation);
+        }
+    });
+
+    return (
+        <group ref={groupRef}>
+            <Hand heldItem={heldItem} />
+        </group>
+    );
+}
 
 function App() {
     const [showTooltip, setShowTooltip] = useState(false);
@@ -30,6 +51,9 @@ function App() {
     // Fridge control panel state
     const [showFridgePanel, setShowFridgePanel] = useState(false);
     const [fridgeState, setFridgeState] = useState({ freezerOpen: false, fridgeOpen: false });
+
+    // Item pickup state
+    const [heldItem, setHeldItem] = useState(null);
 
     const setTooltip = (show, text = '') => {
         setShowTooltip(show);
@@ -63,13 +87,25 @@ function App() {
             });
         };
 
+        // Listen for item pickup/drop events
+        const handlePickup = (e) => {
+            setHeldItem(e.detail);
+        };
+        const handleDrop = () => {
+            setHeldItem(null);
+        };
+
         window.addEventListener('showInteractionTooltip', handleTooltipEvent);
         window.addEventListener('showStoveControl', handleStoveEvent);
         window.addEventListener('showFridgeControl', handleFridgeEvent);
+        window.addEventListener('itemPickup', handlePickup);
+        window.addEventListener('itemDrop', handleDrop);
         return () => {
             window.removeEventListener('showInteractionTooltip', handleTooltipEvent);
             window.removeEventListener('showStoveControl', handleStoveEvent);
             window.removeEventListener('showFridgeControl', handleFridgeEvent);
+            window.removeEventListener('itemPickup', handlePickup);
+            window.removeEventListener('itemDrop', handleDrop);
         };
     }, [showFridgePanel]);
 
@@ -90,6 +126,7 @@ function App() {
                     { name: 'jump', keys: ['Space'] },
                     { name: 'run', keys: ['Shift'] },
                     { name: 'interact', keys: ['e', 'E'] },
+                    { name: 'grab', keys: ['g', 'G'] },
                 ]}
             >
                 <div id="canvas-container" style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
@@ -124,6 +161,9 @@ function App() {
                             </Physics>
 
                             <Environment preset="sunset" />
+
+                            {/* First-person hand overlay */}
+                            <HandOverlay heldItem={heldItem} />
                         </Suspense>
                     </Canvas>
                 </div>

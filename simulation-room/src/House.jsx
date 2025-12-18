@@ -1,8 +1,75 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Wall, Floor, Door, GlassWindow, CeilingLight, FLOOR_COLORS, InteractiveDoor } from './HouseStructure';
-import { Box, Cylinder, Sphere } from '@react-three/drei';
+import { Box, Cylinder, Sphere, useKeyboardControls } from '@react-three/drei';
 import { RigidBody } from '@react-three/rapier';
+import { useFrame, useThree } from '@react-three/fiber';
+import * as THREE from 'three';
 
+// PickableItem component - wraps items that can be picked up with G key
+const PickableItem = ({ children, position, itemType, pickupDistance = 2 }) => {
+    const [isPickedUp, setIsPickedUp] = useState(false);
+    const [isNearby, setIsNearby] = useState(false);
+    const groupRef = useRef();
+    const { camera } = useThree();
+    const [, getKeys] = useKeyboardControls();
+    const lastGrab = useRef(false);
+
+    useFrame(() => {
+        if (!groupRef.current || isPickedUp) return;
+
+        // Check distance to player
+        const itemPos = new THREE.Vector3(...position);
+        const distance = camera.position.distanceTo(itemPos);
+        setIsNearby(distance < pickupDistance);
+
+        // Check for G key press
+        const { grab } = getKeys();
+        if (grab && !lastGrab.current && isNearby) {
+            // Pick up the item
+            setIsPickedUp(true);
+            window.dispatchEvent(new CustomEvent('itemPickup', {
+                detail: { type: itemType, position }
+            }));
+        }
+        lastGrab.current = grab;
+    });
+
+    // Listen for drop event
+    useEffect(() => {
+        const handleDrop = (e) => {
+            if (e.detail?.type === itemType || !e.detail) {
+                setIsPickedUp(false);
+            }
+        };
+        window.addEventListener('itemDrop', handleDrop);
+        return () => window.removeEventListener('itemDrop', handleDrop);
+    }, [itemType]);
+
+    // Listen for global G key to drop when holding
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if ((e.key === 'g' || e.key === 'G') && isPickedUp) {
+                window.dispatchEvent(new CustomEvent('itemDrop', { detail: { type: itemType } }));
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isPickedUp, itemType]);
+
+    if (isPickedUp) return null;
+
+    return (
+        <group ref={groupRef} position={position}>
+            {children}
+            {/* Show pickup hint when nearby */}
+            {isNearby && (
+                <sprite position={[0, 0.3, 0]} scale={[0.5, 0.15, 1]}>
+                    <spriteMaterial color="#FFFFFF" opacity={0.8} transparent />
+                </sprite>
+            )}
+        </group>
+    );
+};
 // --- Furniture Components ---
 
 const Sofa = ({ position, rotation = [0, 0, 0], color = "#553333" }) => (
@@ -1031,10 +1098,6 @@ const CoatHanger = ({ position }) => (
 );
 
 // Interactive Fireplace component with on/off toggle
-import { useFrame, useThree } from '@react-three/fiber';
-import { useKeyboardControls } from '@react-three/drei';
-import { useState, useRef, useEffect } from 'react';
-import * as THREE from 'three';
 
 const InteractiveFireplace = ({ position, rotation = [0, 0, 0], interactionDistance = 3 }) => {
     const [isOn, setIsOn] = useState(true);
@@ -1611,35 +1674,31 @@ function GroundFloor() {
                 </Cylinder>
             </group>
 
-            {/* Milk carton */}
-            <group position={[-13.8, 0.96, -9.4]}>
+            {/* Milk carton - PICKABLE */}
+            <PickableItem position={[-13.8, 0.96, -9.4]} itemType="milk">
                 <Box args={[0.08, 0.22, 0.08]} position={[0, 0.11, 0]}>
                     <meshStandardMaterial color="#FFFFFF" />
                 </Box>
-                {/* Blue cap */}
                 <Box args={[0.06, 0.03, 0.06]} position={[0, 0.23, 0]}>
                     <meshStandardMaterial color="#1976D2" />
                 </Box>
-                {/* Label */}
                 <Box args={[0.075, 0.1, 0.001]} position={[0, 0.1, 0.041]}>
                     <meshStandardMaterial color="#42A5F5" />
                 </Box>
-            </group>
+            </PickableItem>
 
-            {/* Bread loaf in wrapper */}
-            <group position={[-13.3, 0.96, -9.35]}>
+            {/* Bread loaf - PICKABLE */}
+            <PickableItem position={[-13.3, 0.96, -9.35]} itemType="bread">
                 <Box args={[0.12, 0.1, 0.25]} position={[0, 0.05, 0]}>
                     <meshStandardMaterial color="#FFE0B2" transparent opacity={0.7} />
                 </Box>
-                {/* Bread inside */}
                 <Box args={[0.1, 0.08, 0.22]} position={[0, 0.04, 0]}>
                     <meshStandardMaterial color="#D7A86E" roughness={0.8} />
                 </Box>
-                {/* Twist tie */}
                 <Box args={[0.08, 0.01, 0.01]} position={[0, 0.08, 0.12]}>
                     <meshStandardMaterial color="#F44336" />
                 </Box>
-            </group>
+            </PickableItem>
 
             {/* Fruit bowl */}
             <group position={[-12.5, 0.96, -9.35]}>
@@ -1729,16 +1788,15 @@ function GroundFloor() {
 
             {/* === ITEMS ON KITCHEN ISLAND === */}
 
-            {/* Coffee mug */}
-            <group position={[-12.5, 1.02, -6.2]}>
+            {/* Coffee mug - PICKABLE */}
+            <PickableItem position={[-12.5, 1.02, -6.2]} itemType="mug">
                 <Cylinder args={[0.04, 0.035, 0.08, 12]} position={[0, 0.04, 0]}>
                     <meshStandardMaterial color="#FFFFFF" />
                 </Cylinder>
-                {/* Handle */}
                 <Box args={[0.015, 0.04, 0.03]} position={[0.045, 0.04, 0]}>
                     <meshStandardMaterial color="#FFFFFF" />
                 </Box>
-            </group>
+            </PickableItem>
 
             {/* Paper towel roll */}
             <group position={[-11.5, 1.02, -6.3]}>
