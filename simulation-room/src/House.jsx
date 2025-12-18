@@ -1,6 +1,6 @@
 import React from 'react';
 import { Wall, Floor, Door, GlassWindow, CeilingLight, FLOOR_COLORS, InteractiveDoor } from './HouseStructure';
-import { Box, Cylinder } from '@react-three/drei';
+import { Box, Cylinder, Sphere } from '@react-three/drei';
 import { RigidBody } from '@react-three/rapier';
 
 // --- Furniture Components ---
@@ -335,46 +335,528 @@ const Bookshelf = ({ position, rotation = [0, 0, 0] }) => (
     </RigidBody>
 );
 
-const Refrigerator = ({ position }) => (
-    <RigidBody type="fixed" position={position}>
-        <Box args={[0.9, 1.8, 0.7]} position={[0, 0.9, 0]}>
-            <meshStandardMaterial color="#CCCCCC" metalness={0.3} roughness={0.3} />
-        </Box>
-        {/* Handles */}
-        <Box args={[0.03, 0.3, 0.05]} position={[-0.3, 1.2, 0.38]}>
-            <meshStandardMaterial color="#888" metalness={0.8} />
-        </Box>
-        <Box args={[0.03, 0.2, 0.05]} position={[-0.3, 0.5, 0.38]}>
-            <meshStandardMaterial color="#888" metalness={0.8} />
-        </Box>
-    </RigidBody>
-);
+// Interactive Refrigerator with opening doors and food inside
+const InteractiveRefrigerator = ({ position, rotation = [0, 0, 0], interactionDistance = 3 }) => {
+    const [freezerOpen, setFreezerOpen] = useState(false);
+    const [fridgeOpen, setFridgeOpen] = useState(false);
+    const [isNearby, setIsNearby] = useState(false);
+    const groupRef = useRef();
+    const fridgeRef = useRef();
+    const freezerDoorRef = useRef();
+    const fridgeDoorRef = useRef();
+    const { camera, raycaster } = useThree();
+    const [, getKeys] = useKeyboardControls();
+    const lastInteract = useRef(false);
 
-const Stove = ({ position }) => (
-    <RigidBody type="fixed" position={position}>
-        {/* Base */}
-        <Box args={[0.8, 0.9, 0.6]} position={[0, 0.45, 0]}>
-            <meshStandardMaterial color="#222" />
-        </Box>
-        {/* Cooktop */}
-        <Box args={[0.75, 0.02, 0.55]} position={[0, 0.91, 0]}>
-            <meshStandardMaterial color="#111" />
-        </Box>
-        {/* Burners */}
-        {[[-0.2, -0.15], [0.2, -0.15], [-0.2, 0.15], [0.2, 0.15]].map(([x, z], i) => (
-            <Cylinder key={i} args={[0.08, 0.08, 0.01, 16]} position={[x, 0.92, z]}>
-                <meshStandardMaterial color="#333" />
-            </Cylinder>
-        ))}
-    </RigidBody>
-);
+    // Handle keyboard input for individual door control
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (!isNearby) return;
 
-const RangeHood = ({ position }) => (
-    <RigidBody type="fixed" position={position}>
-        <Box args={[0.9, 0.4, 0.5]} position={[0, 0, 0]}>
-            <meshStandardMaterial color="#666" metalness={0.6} />
-        </Box>
-    </RigidBody>
+            if (e.key === '1') {
+                setFreezerOpen(prev => !prev);
+            } else if (e.key === '2') {
+                setFridgeOpen(prev => !prev);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isNearby]);
+
+    useFrame((state, delta) => {
+        if (!groupRef.current || !fridgeRef.current) return;
+
+        const fridgePos = groupRef.current.getWorldPosition(new THREE.Vector3());
+        const distance = camera.position.distanceTo(fridgePos);
+
+        const isClose = distance < interactionDistance;
+
+        let isLookingAt = false;
+        if (isClose) {
+            raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+            const intersects = raycaster.intersectObject(fridgeRef.current, true);
+            isLookingAt = intersects.length > 0;
+        }
+
+        const nowNearby = isClose && isLookingAt;
+        if (nowNearby !== isNearby) {
+            setIsNearby(nowNearby);
+        }
+
+        // Handle E key press - toggle both doors
+        const { interact } = getKeys();
+        if (nowNearby && interact && !lastInteract.current) {
+            const bothOpen = freezerOpen && fridgeOpen;
+            setFreezerOpen(!bothOpen);
+            setFridgeOpen(!bothOpen);
+        }
+        lastInteract.current = interact;
+
+        // Animate freezer door (top) - swings down
+        const freezerTarget = freezerOpen ? -Math.PI / 3 : 0;
+        if (freezerDoorRef.current) {
+            freezerDoorRef.current.rotation.x += (freezerTarget - freezerDoorRef.current.rotation.x) * 0.1;
+        }
+
+        // Animate fridge door (bottom) - swings open
+        const fridgeTarget = fridgeOpen ? Math.PI / 2 : 0;
+        if (fridgeDoorRef.current) {
+            fridgeDoorRef.current.rotation.y += (fridgeTarget - fridgeDoorRef.current.rotation.y) * 0.1;
+        }
+    });
+
+    // Control panel effect
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent('showFridgeControl', {
+            detail: {
+                show: isNearby,
+                freezerOpen,
+                fridgeOpen
+            }
+        }));
+    }, [isNearby, freezerOpen, fridgeOpen]);
+
+    return (
+        <group ref={groupRef} position={position} rotation={rotation}>
+            <RigidBody type="fixed">
+                {/* Hollow shell structure - so interior is visible */}
+                {/* Back panel */}
+                <Box ref={fridgeRef} args={[1.0, 2.2, 0.1]} position={[0, 1.1, -0.375]}>
+                    <meshStandardMaterial color="#E8E8E8" metalness={0.4} roughness={0.3} />
+                </Box>
+                {/* Left side panel */}
+                <Box args={[0.1, 2.2, 0.85]} position={[-0.45, 1.1, 0]}>
+                    <meshStandardMaterial color="#E8E8E8" metalness={0.4} roughness={0.3} />
+                </Box>
+                {/* Right side panel */}
+                <Box args={[0.1, 2.2, 0.85]} position={[0.45, 1.1, 0]}>
+                    <meshStandardMaterial color="#E8E8E8" metalness={0.4} roughness={0.3} />
+                </Box>
+                {/* Top panel */}
+                <Box args={[1.0, 0.1, 0.85]} position={[0, 2.15, 0]}>
+                    <meshStandardMaterial color="#E8E8E8" metalness={0.4} roughness={0.3} />
+                </Box>
+                {/* Bottom panel */}
+                <Box args={[1.0, 0.1, 0.85]} position={[0, 0.05, 0]}>
+                    <meshStandardMaterial color="#E8E8E8" metalness={0.4} roughness={0.3} />
+                </Box>
+                {/* Division line between freezer and fridge */}
+                <Box args={[0.82, 0.04, 0.75]} position={[0, 1.55, 0]}>
+                    <meshStandardMaterial color="#555555" metalness={0.6} />
+                </Box>
+            </RigidBody>
+
+            {/* Freezer Door (top) */}
+            <group ref={freezerDoorRef} position={[0, 2.15, 0.42]}>
+                <Box args={[0.98, 0.55, 0.05]} position={[0, -0.275, 0]}>
+                    <meshStandardMaterial color="#D8D8D8" metalness={0.5} roughness={0.3} />
+                </Box>
+                <Box args={[0.3, 0.03, 0.05]} position={[0, -0.5, 0.03]}>
+                    <meshStandardMaterial color="#888888" metalness={0.8} />
+                </Box>
+            </group>
+
+            {/* Fridge Door (bottom) */}
+            <group ref={fridgeDoorRef} position={[0.48, 0, 0.42]}>
+                <Box args={[0.98, 1.25, 0.05]} position={[-0.49, 0.78, 0]}>
+                    <meshStandardMaterial color="#E0E0E0" metalness={0.5} roughness={0.3} />
+                </Box>
+                <Box args={[0.03, 0.25, 0.05]} position={[-0.95, 1.0, 0.03]}>
+                    <meshStandardMaterial color="#888888" metalness={0.8} />
+                </Box>
+            </group>
+
+            {/* Freezer Interior */}
+            {freezerOpen && (
+                <group>
+                    {/* Freezer floor - items sit on this */}
+                    <Box args={[0.76, 0.03, 0.5]} position={[0, 1.58, -0.05]}>
+                        <meshStandardMaterial color="#E0EEF2" />
+                    </Box>
+
+                    {/* Freezer interior walls - icy white */}
+                    <Box args={[0.76, 0.5, 0.02]} position={[0, 1.82, -0.28]}>
+                        <meshStandardMaterial color="#E8F4F8" />
+                    </Box>
+                    <Box args={[0.02, 0.5, 0.45]} position={[-0.37, 1.82, -0.05]}>
+                        <meshStandardMaterial color="#E0F0F5" />
+                    </Box>
+                    <Box args={[0.02, 0.5, 0.45]} position={[0.37, 1.82, -0.05]}>
+                        <meshStandardMaterial color="#E0F0F5" />
+                    </Box>
+
+                    {/* Frozen food package 1 - pizza box (sitting on floor) */}
+                    <group position={[-0.2, 1.62, -0.08]}>
+                        <Box args={[0.18, 0.04, 0.18]}>
+                            <meshStandardMaterial color="#E53935" />
+                        </Box>
+                        <Box args={[0.14, 0.005, 0.14]} position={[0, 0.023, 0]}>
+                            <meshStandardMaterial color="#FFEB3B" />
+                        </Box>
+                    </group>
+
+                    {/* Frozen food package 2 - vegetables bag (standing on floor) */}
+                    <group position={[0.05, 1.67, -0.08]}>
+                        <Box args={[0.1, 0.12, 0.05]}>
+                            <meshStandardMaterial color="#4CAF50" transparent opacity={0.9} />
+                        </Box>
+                    </group>
+
+                    {/* Ice cream container (on floor) */}
+                    <group position={[0.25, 1.64, -0.1]}>
+                        <Cylinder args={[0.055, 0.055, 0.09, 12]}>
+                            <meshStandardMaterial color="#5D4037" />
+                        </Cylinder>
+                        <Cylinder args={[0.057, 0.057, 0.015, 12]} position={[0, 0.05, 0]}>
+                            <meshStandardMaterial color="#795548" />
+                        </Cylinder>
+                    </group>
+
+                    {/* Subtle cold light */}
+                    <pointLight position={[0, 1.85, 0]} color="#E8F4FF" intensity={0.6} distance={0.8} />
+                </group>
+            )}
+
+            {/* Fridge Interior */}
+            {fridgeOpen && (
+                <group>
+                    {/* White interior back */}
+                    <Box args={[0.78, 1.4, 0.02]} position={[0, 0.78, -0.3]}>
+                        <meshStandardMaterial color="#F8F8F8" />
+                    </Box>
+                    {/* White interior sides */}
+                    <Box args={[0.02, 1.4, 0.5]} position={[-0.38, 0.78, 0]}>
+                        <meshStandardMaterial color="#F5F5F5" />
+                    </Box>
+                    <Box args={[0.02, 1.4, 0.5]} position={[0.38, 0.78, 0]}>
+                        <meshStandardMaterial color="#F5F5F5" />
+                    </Box>
+
+                    {/* Glass shelves */}
+                    <Box args={[0.72, 0.015, 0.45]} position={[0, 0.35, -0.05]}>
+                        <meshStandardMaterial color="#D0E8F0" transparent opacity={0.4} />
+                    </Box>
+                    <Box args={[0.72, 0.015, 0.45]} position={[0, 0.75, -0.05]}>
+                        <meshStandardMaterial color="#D0E8F0" transparent opacity={0.4} />
+                    </Box>
+                    <Box args={[0.72, 0.015, 0.45]} position={[0, 1.15, -0.05]}>
+                        <meshStandardMaterial color="#D0E8F0" transparent opacity={0.4} />
+                    </Box>
+
+                    {/* ===== BOTTOM SHELF ITEMS ===== */}
+                    {/* Milk carton - realistic with label */}
+                    <group position={[-0.25, 0.5, -0.1]}>
+                        <Box args={[0.08, 0.24, 0.08]}>
+                            <meshStandardMaterial color="#FFFFFF" />
+                        </Box>
+                        <Box args={[0.075, 0.04, 0.075]} position={[0, 0.13, 0]}>
+                            <meshStandardMaterial color="#1976D2" />
+                        </Box>
+                        <Box args={[0.06, 0.08, 0.005]} position={[0, 0, 0.04]}>
+                            <meshStandardMaterial color="#42A5F5" />
+                        </Box>
+                    </group>
+
+                    {/* Orange juice bottle */}
+                    <group position={[-0.05, 0.47, -0.1]}>
+                        <Cylinder args={[0.04, 0.04, 0.2, 12]}>
+                            <meshStandardMaterial color="#FF9800" transparent opacity={0.8} />
+                        </Cylinder>
+                        <Cylinder args={[0.025, 0.025, 0.04, 12]} position={[0, 0.12, 0]}>
+                            <meshStandardMaterial color="#E65100" />
+                        </Cylinder>
+                    </group>
+
+                    {/* Egg carton */}
+                    <group position={[0.2, 0.4, -0.08]}>
+                        <Box args={[0.18, 0.06, 0.1]}>
+                            <meshStandardMaterial color="#D7CCC8" />
+                        </Box>
+                        {/* Individual eggs */}
+                        {[[-0.05, 0], [0.05, 0], [-0.05, 0.03], [0.05, 0.03]].map(([x, z], i) => (
+                            <Sphere key={i} args={[0.025, 8, 8]} position={[x, 0.04, z - 0.015]}>
+                                <meshStandardMaterial color="#FFF8E1" />
+                            </Sphere>
+                        ))}
+                    </group>
+
+                    {/* ===== MIDDLE SHELF ITEMS ===== */}
+                    {/* Lettuce/cabbage */}
+                    <Sphere args={[0.08, 12, 12]} position={[-0.22, 0.86, -0.1]}>
+                        <meshStandardMaterial color="#81C784" roughness={0.8} />
+                    </Sphere>
+
+                    {/* Tomatoes */}
+                    <Sphere args={[0.05, 12, 12]} position={[0, 0.82, -0.08]}>
+                        <meshStandardMaterial color="#E53935" roughness={0.4} />
+                    </Sphere>
+                    <Sphere args={[0.045, 12, 12]} position={[0.12, 0.81, -0.12]}>
+                        <meshStandardMaterial color="#EF5350" roughness={0.4} />
+                    </Sphere>
+
+                    {/* Cucumber */}
+                    <Cylinder args={[0.025, 0.025, 0.15, 8]} position={[0.25, 0.82, -0.1]} rotation={[0, 0, Math.PI / 2]}>
+                        <meshStandardMaterial color="#388E3C" roughness={0.6} />
+                    </Cylinder>
+
+                    {/* ===== TOP SHELF ITEMS ===== */}
+                    {/* Apples */}
+                    <Sphere args={[0.055, 12, 12]} position={[-0.2, 1.22, -0.1]}>
+                        <meshStandardMaterial color="#C62828" roughness={0.3} />
+                    </Sphere>
+                    <Sphere args={[0.055, 12, 12]} position={[-0.05, 1.22, -0.08]}>
+                        <meshStandardMaterial color="#43A047" roughness={0.3} />
+                    </Sphere>
+
+                    {/* Orange */}
+                    <Sphere args={[0.055, 12, 12]} position={[0.1, 1.22, -0.1]}>
+                        <meshStandardMaterial color="#FB8C00" roughness={0.5} />
+                    </Sphere>
+
+                    {/* Butter/cheese block */}
+                    <Box args={[0.1, 0.04, 0.06]} position={[0.25, 1.19, -0.08]}>
+                        <meshStandardMaterial color="#FFE082" />
+                    </Box>
+
+                    {/* Subtle interior light - not too bright */}
+                    <pointLight position={[0, 1.3, -0.1]} color="#FFFEF0" intensity={1.5} distance={1.5} />
+                </group>
+            )}
+        </group>
+    );
+};
+
+// Interactive Stove with animated burner flames
+const InteractiveStove = ({ position, rotation = [0, 0, 0], interactionDistance = 3 }) => {
+    const [burnersOn, setBurnersOn] = useState([false, false, false, false]);
+    const [isNearby, setIsNearby] = useState(false);
+    const [showMenu, setShowMenu] = useState(false);
+    const groupRef = useRef();
+    const stoveRef = useRef();
+    const flameRefs = [useRef(), useRef(), useRef(), useRef()];
+    const lightRefs = [useRef(), useRef(), useRef(), useRef()];
+    const { camera, raycaster } = useThree();
+    const [, getKeys] = useKeyboardControls();
+    const lastInteract = useRef(false);
+    const timeRef = useRef(0);
+
+    // Burner positions (larger stove) and labels
+    const burnerPositions = [
+        [-0.35, 1.02, -0.25],  // Front left (1)
+        [0.35, 1.02, -0.25],   // Front right (2)
+        [-0.35, 1.02, 0.25],   // Back left (3)
+        [0.35, 1.02, 0.25]     // Back right (4)
+    ];
+    const burnerLabels = ['Front Left', 'Front Right', 'Back Left', 'Back Right'];
+
+    // Handle keyboard input for individual burner control
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (!showMenu) return;
+
+            const key = e.key;
+            if (key >= '1' && key <= '4') {
+                const burnerIndex = parseInt(key) - 1;
+                setBurnersOn(prev => {
+                    const newState = [...prev];
+                    newState[burnerIndex] = !newState[burnerIndex];
+                    return newState;
+                });
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showMenu]);
+
+    useFrame((state, delta) => {
+        if (!groupRef.current || !stoveRef.current) return;
+
+        const stovePos = groupRef.current.getWorldPosition(new THREE.Vector3());
+        const distance = camera.position.distanceTo(stovePos);
+
+        const isClose = distance < interactionDistance;
+
+        let isLookingAt = false;
+        if (isClose) {
+            raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+            const intersects = raycaster.intersectObject(stoveRef.current, true);
+            isLookingAt = intersects.length > 0;
+        }
+
+        const wasNearby = isNearby;
+        const nowNearby = isClose && isLookingAt;
+
+        if (nowNearby !== wasNearby) {
+            setIsNearby(nowNearby);
+            setShowMenu(nowNearby);
+        }
+
+        // Handle E key press - toggle all burners
+        const { interact } = getKeys();
+        if (nowNearby && interact && !lastInteract.current) {
+            const allOn = burnersOn.every(b => b);
+            setBurnersOn(allOn ? [false, false, false, false] : [true, true, true, true]);
+        }
+        lastInteract.current = interact;
+
+        // Animate flames when burners are on
+        timeRef.current += delta * 10;
+        const t = timeRef.current;
+
+        burnersOn.forEach((isOn, i) => {
+            if (isOn && flameRefs[i].current) {
+                // Flickering flame animation
+                flameRefs[i].current.scale.x = 1 + Math.sin(t * (4 + i * 0.5)) * 0.15;
+                flameRefs[i].current.scale.y = 1 + Math.sin(t * (5 + i * 0.3)) * 0.15;
+                flameRefs[i].current.scale.z = 1 + Math.sin(t * (4.5 + i * 0.4)) * 0.2;
+            }
+            if (isOn && lightRefs[i].current) {
+                lightRefs[i].current.intensity = 1.5 + Math.sin(t * (6 + i)) * 0.5;
+            }
+        });
+    });
+
+    // Stove control panel effect
+    useEffect(() => {
+        // Dispatch stove control panel event for visual UI
+        window.dispatchEvent(new CustomEvent('showStoveControl', {
+            detail: {
+                show: isNearby,
+                burners: burnersOn
+            }
+        }));
+    }, [isNearby, burnersOn]);
+
+    return (
+        <group ref={groupRef} position={position} rotation={rotation}>
+            <RigidBody type="fixed">
+                {/* Stove Body - Larger size */}
+                <Box ref={stoveRef} args={[1.2, 1.0, 0.8]} position={[0, 0.5, 0]}>
+                    <meshStandardMaterial color="#1a1a1a" metalness={0.3} roughness={0.7} />
+                </Box>
+
+                {/* Oven Door */}
+                <Box args={[0.9, 0.5, 0.05]} position={[0, 0.35, 0.42]}>
+                    <meshStandardMaterial color="#222222" metalness={0.4} roughness={0.5} />
+                </Box>
+                {/* Oven Door Handle */}
+                <Box args={[0.6, 0.04, 0.04]} position={[0, 0.55, 0.46]}>
+                    <meshStandardMaterial color="#888888" metalness={0.8} roughness={0.2} />
+                </Box>
+                {/* Oven Window */}
+                <Box args={[0.5, 0.3, 0.02]} position={[0, 0.3, 0.44]}>
+                    <meshStandardMaterial color="#111111" metalness={0.5} transparent opacity={0.7} />
+                </Box>
+
+                {/* Cooktop surface */}
+                <Box args={[1.15, 0.04, 0.75]} position={[0, 1.0, 0]}>
+                    <meshStandardMaterial color="#0a0a0a" metalness={0.4} roughness={0.3} />
+                </Box>
+
+                {/* Control Knobs */}
+                {[-0.4, -0.15, 0.15, 0.4].map((x, i) => (
+                    <Cylinder key={i} args={[0.04, 0.04, 0.03, 16]} position={[x, 0.75, 0.42]} rotation={[Math.PI / 2, 0, 0]}>
+                        <meshStandardMaterial color={burnersOn[i] ? "#ff4400" : "#444444"} metalness={0.6} />
+                    </Cylinder>
+                ))}
+            </RigidBody>
+
+            {/* Burner Grates and Flames */}
+            {burnerPositions.map(([x, y, z], i) => (
+                <group key={i}>
+                    {/* Burner Ring - horizontal */}
+                    <mesh position={[x, y - 0.02, z]} rotation={[Math.PI / 2, 0, 0]}>
+                        <torusGeometry args={[0.12, 0.02, 8, 24]} />
+                        <meshStandardMaterial color="#333333" metalness={0.5} />
+                    </mesh>
+
+                    {/* Grate */}
+                    <Box args={[0.25, 0.02, 0.02]} position={[x, y, z]}>
+                        <meshStandardMaterial color="#222222" metalness={0.4} />
+                    </Box>
+                    <Box args={[0.02, 0.02, 0.25]} position={[x, y, z]}>
+                        <meshStandardMaterial color="#222222" metalness={0.4} />
+                    </Box>
+
+                    {/* Flame - only visible when burner is on - HORIZONTAL */}
+                    {burnersOn[i] && (
+                        <>
+                            {/* Blue flame ring - horizontal */}
+                            <mesh ref={flameRefs[i]} position={[x, y + 0.02, z]} rotation={[Math.PI / 2, 0, 0]}>
+                                <torusGeometry args={[0.1, 0.02, 8, 32]} />
+                                <meshStandardMaterial
+                                    color="#3388ff"
+                                    emissive="#2266ff"
+                                    emissiveIntensity={3}
+                                    transparent
+                                    opacity={0.9}
+                                />
+                            </mesh>
+                            {/* Inner orange flame ring - horizontal */}
+                            <mesh position={[x, y + 0.025, z]} rotation={[Math.PI / 2, 0, 0]}>
+                                <torusGeometry args={[0.08, 0.015, 8, 32]} />
+                                <meshStandardMaterial
+                                    color="#ff6600"
+                                    emissive="#ff4400"
+                                    emissiveIntensity={2.5}
+                                    transparent
+                                    opacity={0.85}
+                                />
+                            </mesh>
+                            {/* Point light for flame glow */}
+                            <pointLight
+                                ref={lightRefs[i]}
+                                position={[x, y + 0.08, z]}
+                                color="#ff6633"
+                                intensity={1.5}
+                                distance={2}
+                            />
+                        </>
+                    )}
+                </group>
+            ))}
+        </group>
+    );
+};
+
+// Realistic Range Hood with lighting
+const RealisticRangeHood = ({ position, rotation = [0, 0, 0] }) => (
+    <group position={position} rotation={rotation}>
+        <RigidBody type="fixed">
+            {/* Main hood body - trapezoid shape */}
+            <Box args={[1.3, 0.15, 0.9]} position={[0, 0, 0]}>
+                <meshStandardMaterial color="#CCCCCC" metalness={0.7} roughness={0.3} />
+            </Box>
+            {/* Hood canopy */}
+            <Box args={[1.2, 0.4, 0.8]} position={[0, 0.25, 0]}>
+                <meshStandardMaterial color="#AAAAAA" metalness={0.6} roughness={0.3} />
+            </Box>
+            {/* Vent chimney */}
+            <Box args={[0.4, 0.8, 0.3]} position={[0, 0.65, 0]}>
+                <meshStandardMaterial color="#999999" metalness={0.5} roughness={0.4} />
+            </Box>
+
+            {/* Vent slats */}
+            {[-0.3, 0, 0.3].map((x, i) => (
+                <Box key={i} args={[0.25, 0.02, 0.6]} position={[x, -0.05, 0]}>
+                    <meshStandardMaterial color="#666666" metalness={0.6} />
+                </Box>
+            ))}
+
+            {/* Hood lights */}
+            <Box args={[0.1, 0.05, 0.1]} position={[-0.3, -0.1, 0]}>
+                <meshStandardMaterial color="#FFFFCC" emissive="#FFFF99" emissiveIntensity={0.5} />
+            </Box>
+            <Box args={[0.1, 0.05, 0.1]} position={[0.3, -0.1, 0]}>
+                <meshStandardMaterial color="#FFFFCC" emissive="#FFFF99" emissiveIntensity={0.5} />
+            </Box>
+        </RigidBody>
+
+        {/* Subtle down lighting */}
+        <pointLight position={[0, -0.2, 0]} color="#FFFEF0" intensity={0.5} distance={3} />
+    </group>
 );
 
 const Sink = ({ position }) => (
@@ -964,20 +1446,19 @@ function GroundFloor() {
             <Wall position={[-12, 1.75, -10]} args={[12, 3.5, 0.2]} />
 
             {/* --- SIDE WALL (West Wall at x=-18) - Stove & Refrigerator --- */}
-            {/* Refrigerator - placed in corner against west wall */}
-            <Refrigerator position={[-17.2, 0, -9]} />
+            {/* Interactive Refrigerator - against west wall, facing room */}
+            <InteractiveRefrigerator position={[-17.4, 0, -8.5]} rotation={[0, Math.PI / 2, 0]} interactionDistance={3} />
 
-            {/* Stove with Range Hood - against west wall */}
-            <Stove position={[-17.2, 0, -6.5]} />
-            <RangeHood position={[-17.5, 2.2, -6.5]} />
-            <meshStandardMaterial color="#888" metalness={0.8} />
-        </Cylinder>
-            </RigidBody >
+            {/* Interactive Stove with animated burners - attached to west wall */}
+            <InteractiveStove position={[-17.5, 0, -5.5]} rotation={[0, Math.PI / 2, 0]} interactionDistance={4} />
+            {/* Realistic Range Hood above stove - attached to wall */}
+            <RealisticRangeHood position={[-17.5, 2.0, -5.5]} rotation={[0, Math.PI / 2, 0]} />
 
-        {/* === GUEST BEDROOM (East Wing) === */ }
-    {/* Only the outer east wall - entrance is from living room's east wall */ }
-    {/* Outer Walls - Expanded to x=\u00B114 */ }
-    {/* Outer Walls - Expanded to x=\u00B118 */ }
+
+            {/* === GUEST BEDROOM (East Wing) === */}
+            {/* Only the outer east wall - entrance is from living room's east wall */}
+            {/* Outer Walls - Expanded to x=\u00B114 */}
+            {/* Outer Walls - Expanded to x=\u00B118 */}
             <Wall position={[18, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
 
             <Bed position={[12, 0, -3]} size="queen" color="#3366AA" />
@@ -987,7 +1468,7 @@ function GroundFloor() {
             <Desk position={[10, 0, -8.5]} rotation={[0, -Math.PI / 2, 0]} />
             <Chair position={[10.8, 0, -8.5]} rotation={[0, Math.PI / 2, 0]} />
 
-    {/* === GUEST BATHROOM (Near Guest Bedroom) === */ }
+            {/* === GUEST BATHROOM (Near Guest Bedroom) === */}
             <Wall position={[8, 1.75, -9]} args={[4, 3.5, 0.2]} />
             <Door position={[6.5, 1.1, -9]} args={[0.8, 2.2, 0.1]} />
 
@@ -995,18 +1476,18 @@ function GroundFloor() {
             <Vanity position={[7, 0, -9.5]} />
             <ShowerCubicle position={[8.5, 0, -9.5]} />
 
-    {/* CEILING - Expanded */ }
-    <Floor position={[0, 3.6, -2.5]} args={[36, 15]} color="#F5F5F0" />
+            {/* CEILING - Expanded */}
+            <Floor position={[0, 3.6, -2.5]} args={[36, 15]} color="#F5F5F0" />
 
-    {/* ===== CEILING LIGHTS ===== */ }
-    <CeilingLight position={[0, 3.55, 3.5]} intensity={1} /> {/* Foyer */ }
-    <CeilingLight position={[0, 3.55, -4]} intensity={1.5} /> {/* Living Room */ }
-    <CeilingLight position={[-3, 3.55, 0]} intensity={1.2} /> {/* Dining (chandelier exists but add ambient) */ }
-    <CeilingLight position={[-14, 3.55, -7]} intensity={1.2} /> {/* Kitchen */ }
-    <CeilingLight position={[9, 3.55, -4]} intensity={0.8} /> {/* Guest Bedroom */ }
+            {/* ===== CEILING LIGHTS ===== */}
+            <CeilingLight position={[0, 3.55, 3.5]} intensity={1} /> {/* Foyer */}
+            <CeilingLight position={[0, 3.55, -4]} intensity={1.5} /> {/* Living Room */}
+            <CeilingLight position={[-3, 3.55, 0]} intensity={1.2} /> {/* Dining (chandelier exists but add ambient) */}
+            <CeilingLight position={[-14, 3.55, -7]} intensity={1.2} /> {/* Kitchen */}
+            <CeilingLight position={[9, 3.55, -4]} intensity={0.8} /> {/* Guest Bedroom */}
 
-    {/* STAIRS to First Floor */ }
-    <Stairs position={[-4, 0, 3]} direction="up" steps={11} />
+            {/* STAIRS to First Floor */}
+            <Stairs position={[-4, 0, 3]} direction="up" steps={11} />
         </group >
     );
 }

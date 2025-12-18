@@ -23,20 +23,55 @@ function App() {
     const [tooltipText, setTooltipText] = useState('');
     const [nearbyDoor, setNearbyDoor] = useState(null);
 
+    // Stove control panel state
+    const [showStovePanel, setShowStovePanel] = useState(false);
+    const [stoveBurners, setStoveBurners] = useState([false, false, false, false]);
+
+    // Fridge control panel state
+    const [showFridgePanel, setShowFridgePanel] = useState(false);
+    const [fridgeState, setFridgeState] = useState({ freezerOpen: false, fridgeOpen: false });
+
     const setTooltip = (show, text = '') => {
         setShowTooltip(show);
         setTooltipText(text);
     };
 
-    // Listen for tooltip events from InteractiveDoor
+    // Listen for tooltip and appliance control events
     useEffect(() => {
         const handleTooltipEvent = (e) => {
-            setShowTooltip(e.detail.show);
-            setTooltipText(e.detail.text);
+            // Don't show regular tooltip when panels are active
+            if (!e.detail.isStove && !showFridgePanel) {
+                setShowTooltip(e.detail.show);
+                setTooltipText(e.detail.text);
+            }
         };
+
+        // Listen for stove control panel events
+        const handleStoveEvent = (e) => {
+            setShowStovePanel(e.detail.show);
+            if (e.detail.burners) {
+                setStoveBurners(e.detail.burners);
+            }
+        };
+
+        // Listen for fridge control panel events
+        const handleFridgeEvent = (e) => {
+            setShowFridgePanel(e.detail.show);
+            setFridgeState({
+                freezerOpen: e.detail.freezerOpen,
+                fridgeOpen: e.detail.fridgeOpen
+            });
+        };
+
         window.addEventListener('showInteractionTooltip', handleTooltipEvent);
-        return () => window.removeEventListener('showInteractionTooltip', handleTooltipEvent);
-    }, []);
+        window.addEventListener('showStoveControl', handleStoveEvent);
+        window.addEventListener('showFridgeControl', handleFridgeEvent);
+        return () => {
+            window.removeEventListener('showInteractionTooltip', handleTooltipEvent);
+            window.removeEventListener('showStoveControl', handleStoveEvent);
+            window.removeEventListener('showFridgeControl', handleFridgeEvent);
+        };
+    }, [showFridgePanel]);
 
     return (
         <InteractionContext.Provider value={{
@@ -146,6 +181,257 @@ function App() {
                         E
                     </div>
                     <span style={{ letterSpacing: '0.3px' }}>{tooltipText}</span>
+                </div>
+            )}
+
+            {/* Stove Control Panel */}
+            {showStovePanel && (
+                <div style={{
+                    position: 'absolute',
+                    bottom: '100px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: 'linear-gradient(180deg, rgba(30, 30, 35, 0.95) 0%, rgba(20, 20, 25, 0.98) 100%)',
+                    color: 'white',
+                    padding: '20px',
+                    borderRadius: '16px',
+                    fontFamily: '"Segoe UI", Arial, sans-serif',
+                    pointerEvents: 'none',
+                    border: '2px solid rgba(255, 100, 50, 0.3)',
+                    boxShadow: '0 12px 40px rgba(0,0,0,0.5), 0 0 30px rgba(255, 100, 0, 0.2)',
+                    backdropFilter: 'blur(12px)',
+                    minWidth: '280px'
+                }}>
+                    {/* Header */}
+                    <div style={{
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        textAlign: 'center',
+                        marginBottom: '16px',
+                        color: '#ff8844',
+                        textTransform: 'uppercase',
+                        letterSpacing: '2px'
+                    }}>
+                        🔥 Stove Control
+                    </div>
+
+                    {/* Burner Grid 2x2 */}
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, 1fr)',
+                        gap: '12px',
+                        marginBottom: '16px'
+                    }}>
+                        {['Back Left', 'Back Right', 'Front Left', 'Front Right'].map((label, displayIndex) => {
+                            // Map display order to actual burner indices
+                            const burnerIndex = [2, 3, 0, 1][displayIndex];
+                            const isOn = stoveBurners[burnerIndex];
+                            return (
+                                <div key={displayIndex} style={{
+                                    background: isOn
+                                        ? 'linear-gradient(135deg, rgba(255, 100, 0, 0.3) 0%, rgba(255, 50, 0, 0.4) 100%)'
+                                        : 'rgba(60, 60, 65, 0.5)',
+                                    border: isOn
+                                        ? '2px solid rgba(255, 150, 50, 0.6)'
+                                        : '2px solid rgba(100, 100, 105, 0.4)',
+                                    borderRadius: '12px',
+                                    padding: '12px',
+                                    textAlign: 'center',
+                                    transition: 'all 0.2s ease'
+                                }}>
+                                    {/* Burner Visual */}
+                                    <div style={{
+                                        fontSize: '24px',
+                                        marginBottom: '6px'
+                                    }}>
+                                        {isOn ? '🔥' : '⚫'}
+                                    </div>
+                                    {/* Label */}
+                                    <div style={{
+                                        fontSize: '11px',
+                                        color: '#aaa',
+                                        marginBottom: '4px'
+                                    }}>
+                                        {label}
+                                    </div>
+                                    {/* Key + Status */}
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                    }}>
+                                        <div style={{
+                                            width: '22px',
+                                            height: '22px',
+                                            background: isOn
+                                                ? 'linear-gradient(135deg, #ff6600 0%, #ff4400 100%)'
+                                                : 'linear-gradient(135deg, #555 0%, #444 100%)',
+                                            borderRadius: '6px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '12px',
+                                            fontWeight: 'bold'
+                                        }}>
+                                            {burnerIndex + 1}
+                                        </div>
+                                        <span style={{
+                                            fontSize: '12px',
+                                            fontWeight: 'bold',
+                                            color: isOn ? '#ff8844' : '#666'
+                                        }}>
+                                            {isOn ? 'ON' : 'OFF'}
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Controls Hint */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: '16px',
+                        fontSize: '12px',
+                        color: '#888',
+                        borderTop: '1px solid rgba(255,255,255,0.1)',
+                        paddingTop: '12px'
+                    }}>
+                        <span><strong style={{ color: '#4CAF50' }}>1-4</strong> Toggle Burner</span>
+                        <span><strong style={{ color: '#4CAF50' }}>E</strong> Toggle All</span>
+                    </div>
+                </div>
+            )}
+
+            {/* Fridge Control Panel */}
+            {showFridgePanel && (
+                <div style={{
+                    position: 'absolute',
+                    bottom: '100px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: 'linear-gradient(180deg, rgba(30, 40, 50, 0.95) 0%, rgba(20, 30, 40, 0.98) 100%)',
+                    color: 'white',
+                    padding: '20px',
+                    borderRadius: '16px',
+                    fontFamily: '"Segoe UI", Arial, sans-serif',
+                    pointerEvents: 'none',
+                    border: '2px solid rgba(100, 180, 255, 0.3)',
+                    boxShadow: '0 12px 40px rgba(0,0,0,0.5), 0 0 30px rgba(100, 180, 255, 0.2)',
+                    backdropFilter: 'blur(12px)',
+                    minWidth: '240px'
+                }}>
+                    {/* Header */}
+                    <div style={{
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        textAlign: 'center',
+                        marginBottom: '16px',
+                        color: '#88CCFF',
+                        textTransform: 'uppercase',
+                        letterSpacing: '2px'
+                    }}>
+                        ❄️ Refrigerator
+                    </div>
+
+                    {/* Freezer Section */}
+                    <div style={{
+                        background: fridgeState.freezerOpen
+                            ? 'linear-gradient(135deg, rgba(100, 180, 255, 0.3) 0%, rgba(50, 150, 255, 0.4) 100%)'
+                            : 'rgba(60, 60, 65, 0.5)',
+                        border: fridgeState.freezerOpen
+                            ? '2px solid rgba(100, 200, 255, 0.6)'
+                            : '2px solid rgba(100, 100, 105, 0.4)',
+                        borderRadius: '12px',
+                        padding: '12px',
+                        marginBottom: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                    }}>
+                        <div style={{ fontSize: '24px' }}>
+                            {fridgeState.freezerOpen ? '📂' : '🧊'}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>Freezer</div>
+                            <div style={{ fontSize: '11px', color: fridgeState.freezerOpen ? '#88CCFF' : '#888' }}>
+                                {fridgeState.freezerOpen ? 'OPEN' : 'CLOSED'}
+                            </div>
+                        </div>
+                        <div style={{
+                            width: '28px',
+                            height: '28px',
+                            background: fridgeState.freezerOpen
+                                ? 'linear-gradient(135deg, #44AAFF 0%, #2288FF 100%)'
+                                : 'linear-gradient(135deg, #555 0%, #444 100%)',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                        }}>
+                            1
+                        </div>
+                    </div>
+
+                    {/* Fridge Section */}
+                    <div style={{
+                        background: fridgeState.fridgeOpen
+                            ? 'linear-gradient(135deg, rgba(100, 255, 150, 0.3) 0%, rgba(50, 200, 100, 0.4) 100%)'
+                            : 'rgba(60, 60, 65, 0.5)',
+                        border: fridgeState.fridgeOpen
+                            ? '2px solid rgba(100, 255, 150, 0.6)'
+                            : '2px solid rgba(100, 100, 105, 0.4)',
+                        borderRadius: '12px',
+                        padding: '12px',
+                        marginBottom: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                    }}>
+                        <div style={{ fontSize: '24px' }}>
+                            {fridgeState.fridgeOpen ? '📂' : '🥗'}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>Fridge</div>
+                            <div style={{ fontSize: '11px', color: fridgeState.fridgeOpen ? '#88FF88' : '#888' }}>
+                                {fridgeState.fridgeOpen ? 'OPEN' : 'CLOSED'}
+                            </div>
+                        </div>
+                        <div style={{
+                            width: '28px',
+                            height: '28px',
+                            background: fridgeState.fridgeOpen
+                                ? 'linear-gradient(135deg, #44FF88 0%, #22CC66 100%)'
+                                : 'linear-gradient(135deg, #555 0%, #444 100%)',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                        }}>
+                            2
+                        </div>
+                    </div>
+
+                    {/* Controls Hint */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: '16px',
+                        fontSize: '12px',
+                        color: '#888',
+                        borderTop: '1px solid rgba(255,255,255,0.1)',
+                        paddingTop: '12px'
+                    }}>
+                        <span><strong style={{ color: '#4CAF50' }}>1</strong> Freezer</span>
+                        <span><strong style={{ color: '#4CAF50' }}>2</strong> Fridge</span>
+                        <span><strong style={{ color: '#4CAF50' }}>E</strong> Toggle All</span>
+                    </div>
                 </div>
             )}
 
