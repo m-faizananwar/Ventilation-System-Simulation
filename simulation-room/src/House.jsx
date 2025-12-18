@@ -17,18 +17,20 @@ let globalHeldItem = null;
 
 const PickableItem = ({ children, position: initialPosition, itemType, pickupDistance = 2 }) => {
     const [isPickedUp, setIsPickedUp] = useState(false);
-    const [isNearby, setIsNearby] = useState(false);
-    const [isLookingAt, setIsLookingAt] = useState(false);
     const [currentPosition, setCurrentPosition] = useState(initialPosition);
     const [isBurning, setIsBurning] = useState(false);
     const [burnProgress, setBurnProgress] = useState(0);
     const [isDestroyed, setIsDestroyed] = useState(false);
+    const [showHint, setShowHint] = useState(false);
     const groupRef = useRef();
     const flameRefs = [useRef(), useRef(), useRef()];
     const { camera } = useThree();
     const [, getKeys] = useKeyboardControls();
     const lastGrab = useRef(false);
     const burnTime = useRef(0);
+    const isNearbyRef = useRef(false);
+    const isLookingAtRef = useRef(false);
+    const hintUpdateCounter = useRef(0);
 
     useFrame((state, delta) => {
         if (isDestroyed) return;
@@ -37,11 +39,10 @@ const PickableItem = ({ children, position: initialPosition, itemType, pickupDis
         // Check distance to player based on current position
         const itemPos = new THREE.Vector3(...currentPosition);
         const distance = camera.position.distanceTo(itemPos);
-        const nearby = distance < pickupDistance;
-        setIsNearby(nearby);
+        isNearbyRef.current = distance < pickupDistance;
 
         // Check if player is looking at this item (crosshair pointing at it)
-        if (nearby) {
+        if (isNearbyRef.current) {
             const cameraDirection = new THREE.Vector3();
             camera.getWorldDirection(cameraDirection);
 
@@ -49,14 +50,24 @@ const PickableItem = ({ children, position: initialPosition, itemType, pickupDis
             const dotProduct = cameraDirection.dot(toItem);
 
             // dotProduct > 0.95 means camera is pointing within ~18 degrees of item
-            setIsLookingAt(dotProduct > 0.95);
+            isLookingAtRef.current = dotProduct > 0.95;
         } else {
-            setIsLookingAt(false);
+            isLookingAtRef.current = false;
+        }
+
+        // Update hint visibility less frequently (every 10 frames)
+        hintUpdateCounter.current++;
+        if (hintUpdateCounter.current >= 10) {
+            hintUpdateCounter.current = 0;
+            const shouldShow = isNearbyRef.current && isLookingAtRef.current && !isBurning;
+            if (shouldShow !== showHint) {
+                setShowHint(shouldShow);
+            }
         }
 
         // Check for G key press - only pickup if looking at item and nothing else is held
         const { grab } = getKeys();
-        if (grab && !lastGrab.current && isNearby && isLookingAt && !isBurning && globalHeldItem === null) {
+        if (grab && !lastGrab.current && isNearbyRef.current && isLookingAtRef.current && !isBurning && globalHeldItem === null) {
             setIsPickedUp(true);
             globalHeldItem = itemType; // Lock pickup to this item
             window.dispatchEvent(new CustomEvent('itemPickup', {
@@ -74,10 +85,13 @@ const PickableItem = ({ children, position: initialPosition, itemType, pickupDis
             }
         }
 
-        // Burning animation
+        // Burning animation - only update if burning
         if (isBurning) {
             burnTime.current += delta;
-            setBurnProgress(Math.min(1, burnTime.current / 3)); // 3 seconds to burn
+            const newProgress = Math.min(1, burnTime.current / 3);
+            if (Math.abs(newProgress - burnProgress) > 0.05) {
+                setBurnProgress(newProgress);
+            }
 
             // Animate flames
             flameRefs.forEach((ref, i) => {
@@ -137,75 +151,38 @@ const PickableItem = ({ children, position: initialPosition, itemType, pickupDis
                 {children}
             </group>
 
-            {/* Enhanced Fire effect when burning */}
+            {/* Simplified Fire effect - optimized */}
             {isBurning && (
                 <group>
-                    {/* Multiple animated flames */}
-                    {[-0.08, -0.04, 0, 0.04, 0.08].map((x, i) => (
+                    {/* 3 simple flames */}
+                    {[0, 1, 2].map((i) => (
                         <mesh
                             key={`flame-${i}`}
-                            ref={i < 3 ? flameRefs[i] : null}
-                            position={[x, 0.08 + Math.sin(i) * 0.02, (i % 2) * 0.03]}
+                            ref={flameRefs[i]}
+                            position={[(i - 1) * 0.05, 0.08, 0]}
                         >
-                            <coneGeometry args={[0.03 + (i === 2 ? 0.02 : 0), 0.12 + (i === 2 ? 0.06 : 0), 8]} />
-                            <meshStandardMaterial
-                                color={i === 2 ? "#FF2200" : i % 2 === 0 ? "#FF6600" : "#FF9900"}
-                                emissive={i === 2 ? "#FF4400" : "#FF6600"}
-                                emissiveIntensity={3}
+                            <coneGeometry args={[0.03, 0.12, 6]} />
+                            <meshBasicMaterial
+                                color={i === 1 ? "#FF4400" : "#FF8800"}
                                 transparent
-                                opacity={0.85}
+                                opacity={0.9}
                             />
                         </mesh>
                     ))}
 
-                    {/* Inner hot core flames */}
-                    <mesh position={[0, 0.06, 0]}>
-                        <coneGeometry args={[0.02, 0.08, 6]} />
-                        <meshStandardMaterial color="#FFFF00" emissive="#FFFF00" emissiveIntensity={4} transparent opacity={0.7} />
-                    </mesh>
+                    {/* Single light for glow */}
+                    <pointLight position={[0, 0.1, 0]} color="#FF4500" intensity={2} distance={1.5} />
 
-                    {/* Flickering fire glow */}
-                    <pointLight position={[0, 0.15, 0]} color="#FF4500" intensity={3 + burnProgress} distance={2} />
-                    <pointLight position={[0, 0.05, 0]} color="#FF8C00" intensity={2} distance={1.5} />
-
-                    {/* Rising smoke particles */}
-                    {[0, 1, 2, 3].map((i) => (
-                        <mesh key={`smoke-${i}`} position={[
-                            Math.sin(i * 1.5) * 0.05,
-                            0.2 + burnProgress * 0.5 + i * 0.15,
-                            Math.cos(i * 1.5) * 0.05
-                        ]}>
-                            <sphereGeometry args={[0.04 + i * 0.02 + burnProgress * 0.05, 8, 8]} />
-                            <meshStandardMaterial
-                                color="#444444"
-                                transparent
-                                opacity={Math.max(0, 0.5 - i * 0.1 - burnProgress * 0.2)}
-                            />
-                        </mesh>
-                    ))}
-
-                    {/* Ember sparks */}
-                    {burnProgress > 0.3 && [0, 1, 2].map((i) => (
-                        <mesh key={`ember-${i}`} position={[
-                            Math.sin(burnProgress * 10 + i * 2) * 0.1,
-                            0.15 + burnProgress * 0.4 + i * 0.05,
-                            Math.cos(burnProgress * 8 + i) * 0.1
-                        ]}>
-                            <sphereGeometry args={[0.008, 4, 4]} />
-                            <meshStandardMaterial color="#FF6600" emissive="#FF4400" emissiveIntensity={5} />
-                        </mesh>
-                    ))}
-
-                    {/* Charring effect on ground */}
-                    <mesh position={[0, -0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                        <circleGeometry args={[0.15 + burnProgress * 0.1, 16]} />
-                        <meshStandardMaterial color="#1a1a1a" transparent opacity={burnProgress * 0.8} />
+                    {/* Single smoke */}
+                    <mesh position={[0, 0.25 + burnProgress * 0.3, 0]}>
+                        <sphereGeometry args={[0.06, 6, 6]} />
+                        <meshBasicMaterial color="#555555" transparent opacity={0.4} />
                     </mesh>
                 </group>
             )}
 
             {/* Pickup hint - only shows when looking at item */}
-            {isNearby && isLookingAt && !isBurning && (
+            {showHint && (
                 <sprite position={[0, 0.3, 0]} scale={[0.5, 0.15, 1]}>
                     <spriteMaterial color="#00FF00" opacity={0.9} transparent />
                 </sprite>
