@@ -162,29 +162,245 @@ export const GroundFloor = () => {
             <Wall position={[12, 1.75, -10]} args={[12, 3.5, 0.2]} />
 
             {/* Exhaust fan on the back wall */}
-            <ExhaustFan position={[15, 2.5, -9.8]} rotation={[0, 0, 0]} speed={2} />
+            <ExhaustFan position={[8, 2.5, -9.8]} rotation={[0, 0, 0]} speed={2} />
 
             {/* UPGRADED Guest Bedroom Furniture - Properly organized against walls */}
             
-            {/* Bed with headboard flush against the back wall */}
-            <LuxuryBed position={[12, 0, -8.5]} size="queen" color="#546E7A" frameColor="#455A64" rotation={[0, Math.PI, 0]} />
-            <Rug position={[12, 0.06, -6]} args={[3.5, 0.02, 3.5]} color="#ECEFF1" />
+            {/* === BED AREA (Against back wall, centered) === */}
+            <LuxuryBed position={[12, 0, -8.5]} size="queen" color="#546E7A" frameColor="#455A64" rotation={[0, 0, 0]} />
+            
+            {/* Large area rug under bed */}
+            <Rug position={[12, 0.06, -6.5]} args={[5, 0.02, 5]} color="#37474F" />
+            {/* Accent rug on top */}
+            <Rug position={[12, 0.08, -5.5]} args={[3, 0.02, 2.5]} color="#ECEFF1" />
             
             {/* Nightstands on either side of bed */}
-            <Nightstand position={[9.8, 0, -8.5]} />
-            <ModernLamp position={[9.8, 0.55, -8.5]} />
-            <Nightstand position={[14.2, 0, -8.5]} />
-            <ModernLamp position={[14.2, 0.55, -8.5]} />
+            <Nightstand position={[9.6, 0, -8.5]} />
+            <ModernLamp position={[9.6, 0.55, -8.5]} />
+            <Nightstand position={[14.4, 0, -8.5]} />
+            <ModernLamp position={[14.4, 0.55, -8.5]} />
             
-            {/* Wall art above the bed */}
-            <WallArt position={[12, 2.2, -9.85]} rotation={[0, 0, 0]} args={[1.2, 0.9]} color="#009688" />
+            {/* Wall art above the bed - Triptych style */}
+            <WallArt position={[10.5, 2.2, -9.85]} rotation={[0, 0, 0]} args={[0.7, 0.9]} color="#00796B" />
+            <WallArt position={[12, 2.2, -9.85]} rotation={[0, 0, 0]} args={[0.7, 0.9]} color="#004D40" />
+            <WallArt position={[13.5, 2.2, -9.85]} rotation={[0, 0, 0]} args={[0.7, 0.9]} color="#00897B" />
 
-            {/* Wardrobe against the right wall */}
-            <ModernWardrobe position={[17.5, 0, -4]} width={2.5} rotation={[0, -Math.PI / 2, 0]} />
+            {/* === WARDROBE AREA (Right wall) === */}
+            <ModernWardrobe position={[17.3, 0, -6]} width={2.5} rotation={[0, -Math.PI / 2, 0]} />
             
-            {/* Work desk in corner (against left wall) */}
-            <GamingDesk position={[6.8, 0, -4]} rotation={[0, Math.PI / 2, 0]} />
-            <ModernChair position={[7.6, 0, -4]} rotation={[0, -Math.PI / 2, 0]} />
+            {/* Full length mirror next to wardrobe */}
+            <Mirror position={[17.85, 1.2, -3]} rotation={[0, -Math.PI / 2, 0]} args={[0.6, 1.8]} />
+            
+            {/* === WORK/STUDY AREA (Left side near entrance) === */}
+            <GamingDesk position={[7, 0, -4]} rotation={[0, Math.PI / 2, 0]} />
+            <ModernChair position={[7.8, 0, -4]} rotation={[0, -Math.PI / 2, 0]} color="#455A64" />
+            
+            {/* Bookshelf near desk */}
+            <Bookshelf position={[6.3, 0, -6.5]} rotation={[0, Math.PI / 2, 0]} />
+            
+            {/* === SEATING/READING AREA (Corner) === */}
+            <Armchair position={[16, 0, -1.5]} rotation={[0, -Math.PI * 0.75, 0]} />
+            {/* Elegant round side table */}
+            <RigidBody type="fixed" position={[15, 0, -0.5]}>
+                {/* Table top - marble look */}
+                <Cylinder args={[0.3, 0.3, 0.025, 24]} position={[0, 0.52, 0]}>
+                    <meshStandardMaterial color="#ECEFF1" metalness={0.1} roughness={0.3} />
+                </Cylinder>
+                {/* Gold rim */}
+                <Cylinder args={[0.31, 0.31, 0.01, 24]} position={[0, 0.51, 0]}>
+                    <meshStandardMaterial color="#D4AF37" metalness={0.8} roughness={0.2} />
+                </Cylinder>
+                {/* Pedestal */}
+                <Cylinder args={[0.08, 0.12, 0.45, 16]} position={[0, 0.27, 0]}>
+                    <meshStandardMaterial color="#37474F" metalness={0.6} roughness={0.3} />
+                </Cylinder>
+                {/* Base */}
+                <Cylinder args={[0.22, 0.22, 0.04, 24]} position={[0, 0.02, 0]}>
+                    <meshStandardMaterial color="#263238" metalness={0.5} roughness={0.4} />
+                </Cylinder>
+            </RigidBody>
+            
+            {/* === PLANTS & DECORATIONS === */}
+            {/* Corner plant */}
+            <PlantPot position={[17, 0, -9]} scale={1.3} />
+            {/* Plant near window/entrance */}
+            <PlantPot position={[6.5, 0, -1.5]} scale={1} />
+            
+            {/* Woven storage basket */}
+            <RigidBody type="fixed" position={[17, 0, -1]}>
+                {/* Basket body - woven texture simulated */}
+                <Cylinder args={[0.28, 0.22, 0.38, 16]} position={[0, 0.19, 0]}>
+                    <meshStandardMaterial color="#A1887F" roughness={0.95} />
+                </Cylinder>
+                {/* Basket rim */}
+                <Cylinder args={[0.29, 0.28, 0.04, 16]} position={[0, 0.39, 0]}>
+                    <meshStandardMaterial color="#8D6E63" roughness={0.9} />
+                </Cylinder>
+                {/* Decorative bands */}
+                <Cylinder args={[0.285, 0.285, 0.02, 16]} position={[0, 0.28, 0]}>
+                    <meshStandardMaterial color="#6D4C41" roughness={0.85} />
+                </Cylinder>
+                <Cylinder args={[0.26, 0.26, 0.02, 16]} position={[0, 0.12, 0]}>
+                    <meshStandardMaterial color="#6D4C41" roughness={0.85} />
+                </Cylinder>
+            </RigidBody>
+            
+            {/* Modern wall clock */}
+            <group position={[17.85, 2.5, -6]} rotation={[0, -Math.PI / 2, 0]}>
+                {/* Clock frame */}
+                <Cylinder args={[0.28, 0.28, 0.04, 32]}>
+                    <meshStandardMaterial color="#212121" metalness={0.3} roughness={0.5} />
+                </Cylinder>
+                {/* Clock face */}
+                <Cylinder args={[0.25, 0.25, 0.02, 32]} position={[0, 0, 0.02]}>
+                    <meshStandardMaterial color="#FAFAFA" roughness={0.3} />
+                </Cylinder>
+                {/* Hour markers */}
+                {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((angle, i) => (
+                    <Box key={i} args={[i % 3 === 0 ? 0.03 : 0.015, i % 3 === 0 ? 0.012 : 0.008, 0.005]} 
+                         position={[Math.sin(angle * Math.PI / 180) * 0.2, Math.cos(angle * Math.PI / 180) * 0.2, 0.035]}>
+                        <meshStandardMaterial color="#1a1a1a" />
+                    </Box>
+                ))}
+                {/* Hour hand */}
+                <Box args={[0.015, 0.12, 0.008]} position={[0.03, 0.04, 0.04]} rotation={[0, 0, -0.4]}>
+                    <meshStandardMaterial color="#1a1a1a" />
+                </Box>
+                {/* Minute hand */}
+                <Box args={[0.01, 0.16, 0.006]} position={[-0.02, 0.06, 0.045]} rotation={[0, 0, 0.8]}>
+                    <meshStandardMaterial color="#1a1a1a" />
+                </Box>
+                {/* Center cap */}
+                <Cylinder args={[0.015, 0.015, 0.015, 12]} position={[0, 0, 0.045]}>
+                    <meshStandardMaterial color="#D4AF37" metalness={0.8} roughness={0.2} />
+                </Cylinder>
+            </group>
+            
+            {/* Modern digital alarm clock on right nightstand */}
+            <group position={[14.4, 0.56, -8.3]}>
+                {/* Clock body */}
+                <Box args={[0.14, 0.08, 0.06]}>
+                    <meshStandardMaterial color="#1a1a1a" roughness={0.3} />
+                </Box>
+                {/* Display */}
+                <Box args={[0.11, 0.05, 0.005]} position={[0, 0.005, 0.031]}>
+                    <meshStandardMaterial color="#001a00" />
+                </Box>
+                {/* LED digits glow */}
+                <Box args={[0.09, 0.04, 0.002]} position={[0, 0.005, 0.034]}>
+                    <meshStandardMaterial color="#00E676" emissive="#00E676" emissiveIntensity={0.8} />
+                </Box>
+                {/* Stand */}
+                <Box args={[0.1, 0.015, 0.04]} position={[0, -0.045, -0.01]}>
+                    <meshStandardMaterial color="#263238" roughness={0.4} />
+                </Box>
+            </group>
+            
+            {/* Realistic book stack on left nightstand */}
+            <group position={[9.6, 0.56, -8.3]}>
+                {/* Bottom book - hardcover */}
+                <Box args={[0.16, 0.035, 0.22]} position={[0, 0, 0]}>
+                    <meshStandardMaterial color="#1565C0" roughness={0.7} />
+                </Box>
+                <Box args={[0.155, 0.03, 0.005]} position={[0, 0, 0.108]}>
+                    <meshStandardMaterial color="#0D47A1" roughness={0.6} />
+                </Box>
+                {/* Middle book */}
+                <Box args={[0.15, 0.028, 0.2]} position={[-0.005, 0.032, 0]}>
+                    <meshStandardMaterial color="#B71C1C" roughness={0.75} />
+                </Box>
+                {/* Top book - slightly askew */}
+                <Box args={[0.14, 0.025, 0.19]} position={[0.01, 0.06, 0.01]} rotation={[0, 0.1, 0]}>
+                    <meshStandardMaterial color="#1B5E20" roughness={0.7} />
+                </Box>
+                {/* Reading glasses on top */}
+                <group position={[0, 0.085, 0.02]} rotation={[0.1, 0.2, 0]}>
+                    <Cylinder args={[0.025, 0.025, 0.005, 16]} position={[-0.035, 0, 0]} rotation={[Math.PI/2, 0, 0]}>
+                        <meshStandardMaterial color="#1a1a1a" metalness={0.3} />
+                    </Cylinder>
+                    <Cylinder args={[0.025, 0.025, 0.005, 16]} position={[0.035, 0, 0]} rotation={[Math.PI/2, 0, 0]}>
+                        <meshStandardMaterial color="#1a1a1a" metalness={0.3} />
+                    </Cylinder>
+                    <Box args={[0.02, 0.003, 0.003]} position={[0, 0, 0]}>
+                        <meshStandardMaterial color="#1a1a1a" metalness={0.4} />
+                    </Box>
+                </group>
+            </group>
+            
+            {/* Ceiling fan for the bedroom */}
+            <CeilingFan position={[12, 3.5, -5]} speed={1.2} />
+            
+            {/* Wall-mounted TV across from bed */}
+            <AnimatedTV position={[12, 1.8, 4.8]} rotation={[0, Math.PI, 0]} />
+            
+            {/* Modern TV console/media unit */}
+            <RigidBody type="fixed" position={[12, 0, 4.5]}>
+                {/* Main body - floating style */}
+                <Box args={[1.9, 0.5, 0.42]} position={[0, 0.35, 0]}>
+                    <meshStandardMaterial color="#37474F" roughness={0.4} />
+                </Box>
+                {/* Top surface - wood accent */}
+                <Box args={[1.92, 0.025, 0.44]} position={[0, 0.615, 0]}>
+                    <meshStandardMaterial color="#5D4037" roughness={0.5} />
+                </Box>
+                {/* Drawer fronts - different finishes */}
+                <Box args={[0.58, 0.2, 0.025]} position={[-0.48, 0.4, 0.215]}>
+                    <meshStandardMaterial color="#455A64" roughness={0.35} />
+                </Box>
+                <Box args={[0.58, 0.2, 0.025]} position={[0.48, 0.4, 0.215]}>
+                    <meshStandardMaterial color="#455A64" roughness={0.35} />
+                </Box>
+                {/* Center open shelf */}
+                <Box args={[0.5, 0.2, 0.38]} position={[0, 0.4, 0]}>
+                    <meshStandardMaterial color="#263238" roughness={0.5} />
+                </Box>
+                {/* Minimalist handles */}
+                <Box args={[0.08, 0.008, 0.015]} position={[-0.48, 0.4, 0.235]}>
+                    <meshStandardMaterial color="#90A4AE" metalness={0.8} roughness={0.2} />
+                </Box>
+                <Box args={[0.08, 0.008, 0.015]} position={[0.48, 0.4, 0.235]}>
+                    <meshStandardMaterial color="#90A4AE" metalness={0.8} roughness={0.2} />
+                </Box>
+                {/* Legs - hairpin style */}
+                {[[-0.85, -0.18], [0.85, -0.18], [-0.85, 0.18], [0.85, 0.18]].map(([x, z], i) => (
+                    <Cylinder key={i} args={[0.012, 0.012, 0.15, 8]} position={[x, 0.075, z]}>
+                        <meshStandardMaterial color="#1a1a1a" metalness={0.7} roughness={0.3} />
+                    </Cylinder>
+                ))}
+            </RigidBody>
+            
+            {/* Decorative items on TV console */}
+            <PlantPot position={[11.2, 0.64, 4.5]} scale={0.5} />
+            
+            {/* Elegant photo frame */}
+            <group position={[12.8, 0.72, 4.5]}>
+                {/* Frame */}
+                <Box args={[0.18, 0.24, 0.025]}>
+                    <meshStandardMaterial color="#5D4037" roughness={0.5} />
+                </Box>
+                {/* Mat */}
+                <Box args={[0.14, 0.2, 0.005]} position={[0, 0, 0.016]}>
+                    <meshStandardMaterial color="#FAFAFA" roughness={0.8} />
+                </Box>
+                {/* Photo */}
+                <Box args={[0.1, 0.14, 0.003]} position={[0, 0, 0.02]}>
+                    <meshStandardMaterial color="#BDBDBD" roughness={0.6} />
+                </Box>
+                {/* Stand */}
+                <Box args={[0.12, 0.003, 0.08]} position={[0, -0.12, -0.04]} rotation={[-0.3, 0, 0]}>
+                    <meshStandardMaterial color="#4E342E" roughness={0.5} />
+                </Box>
+            </group>
+            
+            {/* Decorative candles */}
+            <group position={[12.3, 0.64, 4.55]}>
+                <Cylinder args={[0.025, 0.025, 0.12, 12]} position={[0, 0.06, 0]}>
+                    <meshStandardMaterial color="#ECEFF1" roughness={0.6} />
+                </Cylinder>
+                <Cylinder args={[0.03, 0.03, 0.08, 12]} position={[0.08, 0.04, 0]}>
+                    <meshStandardMaterial color="#BCAAA4" roughness={0.6} />
+                </Cylinder>
+            </group>
 
             {/* === GUEST BATHROOM (Near Guest Bedroom) === */}
             <Wall position={[8, 1.75, -9]} args={[4, 3.5, 0.2]} />
@@ -200,8 +416,11 @@ export const GroundFloor = () => {
             <CeilingLight position={[-3, 3.55, 0]} intensity={1.2} />
             <CeilingLight position={[-14, 3.55, -7]} intensity={1.2} />
             <CeilingLight position={[9, 3.55, -4]} intensity={0.8} />
+            <CeilingLight position={[12, 3.55, -5]} intensity={1} />
             <CeilingFan position={[-12, 3.5, -7]} speed={1.5} />
-            <Stairs position={[-4, 0, 3]} direction="up" steps={11} />
+
+            {/* TV Lounge Exhaust Fan */}
+            <ExhaustFan position={[0, 2.5, -9.8]} rotation={[0, 0, 0]} speed={1.5} />
         </group >
     );
 };
