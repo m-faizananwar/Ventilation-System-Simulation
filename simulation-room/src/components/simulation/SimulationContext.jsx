@@ -199,8 +199,8 @@ export const SimulationProvider = ({ children }) => {
                 temp += heater.level * 4;
             }
 
-            // Global smoke level affects all rooms
-            smoke += smokeLevel * 0.3;
+            // Global smoke level affects all rooms (directly, 1:1 ratio)
+            smoke += smokeLevel;
 
             // Emergency mode affects everything
             if (emergencyMode) {
@@ -290,6 +290,27 @@ export const SimulationProvider = ({ children }) => {
         return () => clearInterval(interval);
     }, [ventilationStates, chimneyBlocked, burningItems.length]);
 
+    // Fallback decay: if there's residual smoke but no active ventilation,
+    // slowly decay it anyway (simulates natural air circulation)
+    useEffect(() => {
+        if (smokeLevel <= 0) return;
+
+        // Check if any ventilation is active
+        const anyVentActive = Object.values(ventilationStates).some(v => v.active);
+        if (anyVentActive) return; // Let the main ventilation effect handle it
+
+        // Natural slow decay when no ventilation - 1% per second
+        const interval = setInterval(() => {
+            setSmokeLevel(prev => {
+                if (prev <= 0) return 0;
+                const newVal = prev * 0.99; // 1% natural decay
+                return newVal < 0.5 ? 0 : newVal;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [smokeLevel, ventilationStates]);
+
     // Listen for RISC-V commands
     useEffect(() => {
         const handleRiscvCommand = (e) => {
@@ -303,10 +324,19 @@ export const SimulationProvider = ({ children }) => {
                     [command.room]: { active: true, level: command.level || 'HIGH' }
                 }));
             } else if (command.action === 'DEACTIVATE_VENT' && command.room) {
-                setVentilationStates(prev => ({
-                    ...prev,
-                    [command.room]: { active: false, level: 'OFF' }
-                }));
+                // CRITICAL FIX: Only deactivate if smoke is fully cleared
+                // This prevents premature shutdown when smoke is still present
+                setSmokeLevel(currentSmoke => {
+                    if (currentSmoke <= 0) {
+                        // Smoke is clear, safe to deactivate
+                        setVentilationStates(prev => ({
+                            ...prev,
+                            [command.room]: { active: false, level: 'OFF' }
+                        }));
+                    }
+                    // If smoke > 0, ignore DEACTIVATE command and keep ventilation running
+                    return currentSmoke;
+                });
             } else if (command.action === 'SET_ALERT' && command.room) {
                 setRoomAlertLevels(prev => ({
                     ...prev,
