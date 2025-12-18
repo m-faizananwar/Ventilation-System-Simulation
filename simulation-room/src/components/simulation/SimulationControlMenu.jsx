@@ -16,8 +16,10 @@ const SimulationControlMenu = () => {
         heaterStates,
         setHeaterState,
         overloadHeater,
+        resetHeater,
         explosionStates,
         triggerExplosion,
+        resetAppliance,
         emergencyMode,
         triggerEmergency,
         resetSimulation,
@@ -365,29 +367,62 @@ const SimulationControlMenu = () => {
                                 <div style={{ 
                                     display: 'flex', 
                                     justifyContent: 'space-between',
+                                    alignItems: 'center',
                                     marginBottom: '12px'
                                 }}>
                                     <h4 style={{ margin: 0, color: '#FF8C42', fontSize: '14px' }}>
                                         🔥 Room Heaters
                                     </h4>
-                                    <button
-                                        onClick={() => {
-                                            heaterRooms.forEach(room => {
-                                                overloadHeater(room.id);
-                                            });
-                                        }}
-                                        style={{
-                                            padding: '6px 12px',
-                                            background: '#FF4444',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            color: 'white',
-                                            fontSize: '11px',
-                                            cursor: 'pointer',
-                                        }}
-                                    >
-                                        Overload All
-                                    </button>
+                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                        <button
+                                            onClick={() => {
+                                                heaterRooms.forEach(room => {
+                                                    const state = heaterStates[room.id];
+                                                    if (!state?.overloaded) overloadHeater(room.id);
+                                                });
+                                            }}
+                                            style={{
+                                                padding: '6px 10px',
+                                                background: '#FF4444',
+                                                border: 'none',
+                                                borderRadius: '6px',
+                                                color: 'white',
+                                                fontSize: '10px',
+                                                cursor: 'pointer',
+                                            }}
+                                        >
+                                            ⚡ All
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                heaterRooms.forEach(room => resetHeater(room.id));
+                                            }}
+                                            style={{
+                                                padding: '6px 10px',
+                                                background: '#4CAF50',
+                                                border: 'none',
+                                                borderRadius: '6px',
+                                                color: 'white',
+                                                fontSize: '10px',
+                                                cursor: 'pointer',
+                                            }}
+                                        >
+                                            ✓ Reset All
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                {/* Info box explaining heater overload */}
+                                <div style={{
+                                    background: 'rgba(255,140,66,0.15)',
+                                    border: '1px solid rgba(255,140,66,0.3)',
+                                    borderRadius: '8px',
+                                    padding: '10px',
+                                    marginBottom: '12px',
+                                    fontSize: '11px',
+                                    color: '#FFB366',
+                                }}>
+                                    <strong>⚡ Overload:</strong> Simulates heater malfunction causing smoke & fire hazard. Click ⚡ to overload or click again to reset.
                                 </div>
                                 
                                 {heaterRooms.map(room => {
@@ -423,14 +458,16 @@ const SimulationControlMenu = () => {
                                             <div style={{ display: 'flex', gap: '6px' }}>
                                                 <button
                                                     onClick={() => setHeaterState(room.id, { on: !state.on })}
+                                                    disabled={state.overloaded}
                                                     style={{
                                                         padding: '6px 10px',
-                                                        background: state.on ? '#4CAF50' : '#444',
+                                                        background: state.overloaded ? '#555' : (state.on ? '#4CAF50' : '#444'),
                                                         border: 'none',
                                                         borderRadius: '4px',
                                                         color: 'white',
                                                         fontSize: '10px',
-                                                        cursor: 'pointer',
+                                                        cursor: state.overloaded ? 'not-allowed' : 'pointer',
+                                                        opacity: state.overloaded ? 0.6 : 1,
                                                     }}
                                                 >
                                                     {state.on ? 'ON' : 'OFF'}
@@ -439,7 +476,7 @@ const SimulationControlMenu = () => {
                                                     onClick={() => overloadHeater(room.id)}
                                                     style={{
                                                         padding: '6px 10px',
-                                                        background: '#FF6B35',
+                                                        background: state.overloaded ? '#4CAF50' : '#FF6B35',
                                                         border: 'none',
                                                         borderRadius: '4px',
                                                         color: 'white',
@@ -447,7 +484,7 @@ const SimulationControlMenu = () => {
                                                         cursor: 'pointer',
                                                     }}
                                                 >
-                                                    ⚡
+                                                    {state.overloaded ? '✓' : '⚡'}
                                                 </button>
                                             </div>
                                         </div>
@@ -459,11 +496,56 @@ const SimulationControlMenu = () => {
                         {/* Appliances Tab */}
                         {activeTab === 'appliances' && (
                             <div>
-                                <h4 style={{ margin: '0 0 12px 0', color: '#FFD93D', fontSize: '14px' }}>
-                                    💥 Appliance Controls
-                                </h4>
+                                <div style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    marginBottom: '12px'
+                                }}>
+                                    <h4 style={{ margin: 0, color: '#FFD93D', fontSize: '14px' }}>
+                                        💥 Appliance Controls
+                                    </h4>
+                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                        <button
+                                            onClick={() => {
+                                                appliances.forEach(app => {
+                                                    const state = explosionStates[app.id];
+                                                    if (!state?.exploded) triggerExplosion(app.id);
+                                                });
+                                            }}
+                                            style={{
+                                                padding: '6px 10px',
+                                                background: '#FF4444',
+                                                border: 'none',
+                                                borderRadius: '6px',
+                                                color: 'white',
+                                                fontSize: '10px',
+                                                cursor: 'pointer',
+                                            }}
+                                        >
+                                            💥 All
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                appliances.forEach(app => resetAppliance(app.id));
+                                            }}
+                                            style={{
+                                                padding: '6px 10px',
+                                                background: '#4CAF50',
+                                                border: 'none',
+                                                borderRadius: '6px',
+                                                color: 'white',
+                                                fontSize: '10px',
+                                                cursor: 'pointer',
+                                            }}
+                                        >
+                                            ✓ Reset All
+                                        </button>
+                                    </div>
+                                </div>
+                                
                                 <p style={{ fontSize: '11px', color: '#888', marginBottom: '16px' }}>
-                                    Trigger electrical failures to simulate smoke and fire hazards.
+                                    Trigger electrical failures to simulate smoke and fire hazards. Click again to repair.
                                 </p>
                                 
                                 {appliances.map(appliance => {
@@ -498,21 +580,20 @@ const SimulationControlMenu = () => {
                                             </div>
                                             <button
                                                 onClick={() => triggerExplosion(appliance.id)}
-                                                disabled={state.exploded}
                                                 style={{
                                                     padding: '10px 16px',
                                                     background: state.exploded 
-                                                        ? '#666' 
+                                                        ? 'linear-gradient(135deg, #4CAF50, #388E3C)' 
                                                         : 'linear-gradient(135deg, #FF6B35, #FF4444)',
                                                     border: 'none',
                                                     borderRadius: '8px',
                                                     color: 'white',
                                                     fontSize: '12px',
-                                                    cursor: state.exploded ? 'not-allowed' : 'pointer',
+                                                    cursor: 'pointer',
                                                     fontWeight: 'bold',
                                                 }}
                                             >
-                                                {state.exploded ? 'Damaged' : '💥 Blast'}
+                                                {state.exploded ? '🔧 Repair' : '💥 Blast'}
                                             </button>
                                         </div>
                                     );

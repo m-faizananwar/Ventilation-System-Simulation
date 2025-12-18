@@ -66,24 +66,64 @@ export const SimulationProvider = ({ children }) => {
         }));
     }, []);
     
-    // Overload a heater (causes smoke)
+    // Overload a heater (causes smoke) - or reset if already overloaded
     const overloadHeater = useCallback((roomId) => {
-        setHeaterStates(prev => ({
-            ...prev,
-            [roomId]: { ...prev[roomId], overloaded: true, on: true, level: 3 }
-        }));
-        setAlarmActive(true);
-        setSmokeLevel(prev => Math.min(prev + 30, 100));
+        setHeaterStates(prev => {
+            const current = prev[roomId];
+            if (current.overloaded) {
+                // Reset the heater
+                return {
+                    ...prev,
+                    [roomId]: { on: false, level: 1, overloaded: false }
+                };
+            } else {
+                // Overload the heater
+                setAlarmActive(true);
+                setSmokeLevel(s => Math.min(s + 30, 100));
+                return {
+                    ...prev,
+                    [roomId]: { ...prev[roomId], overloaded: true, on: true, level: 3 }
+                };
+            }
+        });
     }, []);
     
-    // Trigger appliance explosion
+    // Reset a specific heater
+    const resetHeater = useCallback((roomId) => {
+        setHeaterStates(prev => ({
+            ...prev,
+            [roomId]: { on: false, level: 1, overloaded: false }
+        }));
+    }, []);
+    
+    // Trigger appliance explosion - or reset if already exploded
     const triggerExplosion = useCallback((applianceId) => {
+        setExplosionStates(prev => {
+            const current = prev[applianceId];
+            if (current.exploded) {
+                // Reset the appliance
+                return {
+                    ...prev,
+                    [applianceId]: { exploded: false, smoking: false }
+                };
+            } else {
+                // Trigger explosion
+                setAlarmActive(true);
+                setSmokeLevel(s => Math.min(s + 40, 100));
+                return {
+                    ...prev,
+                    [applianceId]: { exploded: true, smoking: true }
+                };
+            }
+        });
+    }, []);
+    
+    // Reset a specific appliance
+    const resetAppliance = useCallback((applianceId) => {
         setExplosionStates(prev => ({
             ...prev,
-            [applianceId]: { exploded: true, smoking: true }
+            [applianceId]: { exploded: false, smoking: false }
         }));
-        setAlarmActive(true);
-        setSmokeLevel(prev => Math.min(prev + 40, 100));
     }, []);
     
     // Trigger full emergency mode
@@ -127,8 +167,10 @@ export const SimulationProvider = ({ children }) => {
             heaterStates,
             setHeaterState,
             overloadHeater,
+            resetHeater,
             explosionStates,
             triggerExplosion,
+            resetAppliance,
             emergencyMode,
             triggerEmergency,
             resetSimulation,
