@@ -1,11 +1,309 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useSimulation } from './SimulationContext';
+import { useRiscvCommunication } from '../../hooks/useRiscvCommunication';
+
+// RISC-V Tab Content Component
+const RiscvTabContent = () => {
+    const {
+        sensorData,
+        aggregatedSensors,
+        lastRiscvCommand,
+        ventilationStates,
+        setVentilationState,
+        roomAlertLevels,
+    } = useSimulation();
+
+    const {
+        isConnected,
+        connectionError,
+        lastWokwiData,
+        publishSensorData,
+        publishCommand,
+    } = useRiscvCommunication();
+
+    const [autoPublish, setAutoPublish] = useState(false);
+
+    // Auto-publish sensor data when enabled
+    useEffect(() => {
+        if (!autoPublish || !isConnected) return;
+
+        const interval = setInterval(() => {
+            publishSensorData(aggregatedSensors);
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [autoPublish, isConnected, aggregatedSensors, publishSensorData]);
+
+    const rooms = [
+        { id: 'kitchen', name: 'Kitchen' },
+        { id: 'living-room', name: 'Living Room' },
+        { id: 'dining-room', name: 'Dining Room' },
+        { id: 'guest-bedroom', name: 'Guest Bedroom' },
+        { id: 'master-bedroom', name: 'Master Bedroom' },
+        { id: 'children-room', name: "Children's Room" },
+        { id: 'home-office', name: 'Home Office' },
+    ];
+
+    const getAlertColor = (level) => {
+        switch (level) {
+            case 'critical': return '#FF0000';
+            case 'danger': return '#FF6600';
+            case 'warning': return '#FFAA00';
+            default: return '#00FF00';
+        }
+    };
+
+    return (
+        <div>
+            {/* Connection Status */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px',
+                background: isConnected
+                    ? 'rgba(76,175,80,0.2)'
+                    : 'rgba(255,100,100,0.2)',
+                borderRadius: '10px',
+                marginBottom: '12px',
+                border: `1px solid ${isConnected ? '#4CAF50' : '#FF4444'}`,
+            }}>
+                <div>
+                    <div style={{
+                        fontWeight: 'bold',
+                        fontSize: '13px',
+                        color: isConnected ? '#4CAF50' : '#FF4444'
+                    }}>
+                        {isConnected ? '🔗 Connected' : '❌ Disconnected'}
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#888' }}>
+                        broker.hivemq.com
+                    </div>
+                </div>
+                <div style={{
+                    width: '12px',
+                    height: '12px',
+                    borderRadius: '50%',
+                    background: isConnected ? '#4CAF50' : '#666',
+                    boxShadow: isConnected ? '0 0 8px #4CAF50' : 'none',
+                }} />
+            </div>
+
+            {connectionError && (
+                <div style={{
+                    padding: '8px',
+                    background: 'rgba(255,100,100,0.2)',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    color: '#FF6666',
+                    marginBottom: '12px',
+                }}>
+                    ⚠️ {connectionError}
+                </div>
+            )}
+
+            {/* Auto-Publish Toggle */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 12px',
+                background: 'rgba(60,60,70,0.4)',
+                borderRadius: '8px',
+                marginBottom: '12px',
+            }}>
+                <div>
+                    <div style={{ fontWeight: 'bold', fontSize: '12px' }}>Auto-Publish Sensors</div>
+                    <div style={{ fontSize: '10px', color: '#888' }}>Send data to RISC-V every second</div>
+                </div>
+                <button
+                    onClick={() => setAutoPublish(!autoPublish)}
+                    disabled={!isConnected}
+                    style={{
+                        padding: '6px 14px',
+                        background: autoPublish ? '#4CAF50' : '#444',
+                        border: 'none',
+                        borderRadius: '6px',
+                        color: 'white',
+                        fontSize: '11px',
+                        cursor: isConnected ? 'pointer' : 'not-allowed',
+                        opacity: isConnected ? 1 : 0.5,
+                    }}
+                >
+                    {autoPublish ? 'ON' : 'OFF'}
+                </button>
+            </div>
+
+            {/* Aggregated Sensor Display */}
+            <h4 style={{ margin: '0 0 10px 0', color: '#4A90D9', fontSize: '13px' }}>
+                📊 Aggregated Sensors (Max Values)
+            </h4>
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '8px',
+                marginBottom: '16px',
+            }}>
+                {[
+                    { key: 'smoke', label: 'Smoke', icon: '💨', unit: '%', danger: 50 },
+                    { key: 'co2', label: 'CO2', icon: '🌫️', unit: 'ppm', danger: 1000 },
+                    { key: 'pm25', label: 'PM2.5', icon: '🌪️', unit: 'µg/m³', danger: 100 },
+                    { key: 'temp', label: 'Temp', icon: '🌡️', unit: '°C', danger: 40 },
+                ].map(sensor => {
+                    const value = aggregatedSensors[sensor.key] || 0;
+                    const isDanger = value > sensor.danger;
+                    return (
+                        <div key={sensor.key} style={{
+                            padding: '10px',
+                            background: isDanger ? 'rgba(255,100,100,0.2)' : 'rgba(60,60,70,0.4)',
+                            borderRadius: '8px',
+                            border: isDanger ? '1px solid #FF4444' : 'none',
+                        }}>
+                            <div style={{ fontSize: '12px', color: '#888' }}>
+                                {sensor.icon} {sensor.label}
+                            </div>
+                            <div style={{
+                                fontSize: '18px',
+                                fontWeight: 'bold',
+                                color: isDanger ? '#FF4444' : '#4CAF50',
+                            }}>
+                                {value}<span style={{ fontSize: '10px', color: '#666' }}>{sensor.unit}</span>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Status from Aggregated */}
+            <div style={{
+                padding: '10px',
+                background: aggregatedSensors.status === 'CRITICAL' ? 'rgba(255,0,0,0.3)' :
+                    aggregatedSensors.status === 'WARNING' ? 'rgba(255,170,0,0.3)' :
+                        'rgba(76,175,80,0.2)',
+                borderRadius: '8px',
+                textAlign: 'center',
+                marginBottom: '16px',
+                border: `1px solid ${aggregatedSensors.status === 'CRITICAL' ? '#FF0000' :
+                        aggregatedSensors.status === 'WARNING' ? '#FFAA00' :
+                            '#4CAF50'
+                    }`,
+            }}>
+                <div style={{
+                    fontWeight: 'bold',
+                    fontSize: '14px',
+                    color: aggregatedSensors.status === 'CRITICAL' ? '#FF0000' :
+                        aggregatedSensors.status === 'WARNING' ? '#FFAA00' :
+                            '#4CAF50'
+                }}>
+                    {aggregatedSensors.status || 'SAFE'}
+                </div>
+            </div>
+
+            {/* Last Wokwi Data */}
+            {lastWokwiData && (
+                <>
+                    <h4 style={{ margin: '0 0 8px 0', color: '#FF8C42', fontSize: '12px' }}>
+                        📡 From Wokwi
+                    </h4>
+                    <div style={{
+                        padding: '10px',
+                        background: 'rgba(60,60,70,0.4)',
+                        borderRadius: '8px',
+                        marginBottom: '12px',
+                        fontSize: '11px',
+                        fontFamily: 'monospace',
+                    }}>
+                        <div>PM2.5: {lastWokwiData.pm25} | CO2: {lastWokwiData.co2}</div>
+                        <div>Smoke: {lastWokwiData.smoke ? 'Yes' : 'No'}</div>
+                        <div style={{ color: lastWokwiData.status?.includes('CRITICAL') ? '#FF4444' : '#4CAF50' }}>
+                            Status: {lastWokwiData.status}
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Last RISC-V Command */}
+            {lastRiscvCommand && (
+                <>
+                    <h4 style={{ margin: '0 0 8px 0', color: '#8888FF', fontSize: '12px' }}>
+                        📥 Last Command
+                    </h4>
+                    <div style={{
+                        padding: '10px',
+                        background: 'rgba(100,100,200,0.2)',
+                        borderRadius: '8px',
+                        marginBottom: '12px',
+                        fontSize: '11px',
+                        fontFamily: 'monospace',
+                    }}>
+                        {JSON.stringify(lastRiscvCommand, null, 2)}
+                    </div>
+                </>
+            )}
+
+            {/* Manual Room Controls */}
+            <h4 style={{ margin: '0 0 8px 0', color: '#aaa', fontSize: '12px' }}>
+                🎮 Manual Override
+            </h4>
+            <div style={{
+                maxHeight: '150px',
+                overflowY: 'auto',
+                background: 'rgba(60,60,70,0.3)',
+                borderRadius: '8px',
+                padding: '8px',
+            }}>
+                {rooms.map(room => {
+                    const vent = ventilationStates[room.id] || { active: false };
+                    const alert = roomAlertLevels[room.id] || 'normal';
+                    return (
+                        <div key={room.id} style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '6px 8px',
+                            borderBottom: '1px solid rgba(255,255,255,0.05)',
+                        }}>
+                            <div style={{ fontSize: '11px', flex: 1 }}>
+                                <span style={{
+                                    display: 'inline-block',
+                                    width: '8px',
+                                    height: '8px',
+                                    borderRadius: '50%',
+                                    background: getAlertColor(alert),
+                                    marginRight: '6px',
+                                }} />
+                                {room.name}
+                            </div>
+                            <button
+                                onClick={() => setVentilationState(room.id, {
+                                    active: !vent.active,
+                                    level: 'HIGH'
+                                })}
+                                style={{
+                                    padding: '3px 8px',
+                                    background: vent.active ? '#4A90D9' : '#444',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    color: 'white',
+                                    fontSize: '9px',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                {vent.active ? '🌀 ON' : 'VENT'}
+                            </button>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
 
 const SimulationControlMenu = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('emergency');
     const containerRef = useRef(null);
-    
+
     const {
         alarmActive,
         setAlarmActive,
@@ -24,19 +322,19 @@ const SimulationControlMenu = () => {
         triggerEmergency,
         resetSimulation,
     } = useSimulation();
-    
+
     // Exit pointer lock when menu opens
     useEffect(() => {
         if (isOpen && document.pointerLockElement) {
             document.exitPointerLock();
         }
     }, [isOpen]);
-    
+
     // Prevent clicks from triggering pointer lock on canvas
     const stopPropagation = useCallback((e) => {
         e.stopPropagation();
     }, []);
-    
+
     const toggleMenu = useCallback(() => {
         // Exit pointer lock when opening menu
         if (!isOpen && document.pointerLockElement) {
@@ -44,7 +342,7 @@ const SimulationControlMenu = () => {
         }
         setIsOpen(prev => !prev);
     }, [isOpen]);
-    
+
     const heaterRooms = [
         { id: 'living-room', name: 'Living Room' },
         { id: 'dining-room', name: 'Dining Room' },
@@ -53,16 +351,16 @@ const SimulationControlMenu = () => {
         { id: 'children-room', name: "Children's Room" },
         { id: 'home-office', name: 'Home Office' },
     ];
-    
+
     const appliances = [
         { id: 'tv-living', name: 'Living Room TV' },
         { id: 'tv-master', name: 'Master Bedroom TV' },
         { id: 'stove', name: 'Kitchen Stove' },
         { id: 'fridge', name: 'Refrigerator' },
     ];
-    
+
     return (
-        <div 
+        <div
             ref={containerRef}
             onMouseDown={stopPropagation}
             onPointerDown={stopPropagation}
@@ -80,8 +378,8 @@ const SimulationControlMenu = () => {
                     height: '60px',
                     borderRadius: '50%',
                     pointerEvents: 'auto',
-                    background: emergencyMode 
-                        ? 'linear-gradient(135deg, #FF0000, #CC0000)' 
+                    background: emergencyMode
+                        ? 'linear-gradient(135deg, #FF0000, #CC0000)'
                         : 'linear-gradient(135deg, #4A90D9, #357ABD)',
                     border: '3px solid rgba(255,255,255,0.3)',
                     color: 'white',
@@ -100,7 +398,7 @@ const SimulationControlMenu = () => {
             >
                 {emergencyMode ? '🚨' : '⚙️'}
             </button>
-            
+
             {/* Main Menu Panel */}
             {isOpen && (
                 <div
@@ -133,8 +431,8 @@ const SimulationControlMenu = () => {
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <span style={{ fontSize: '20px' }}>🏠</span>
-                            <span style={{ 
-                                color: 'white', 
+                            <span style={{
+                                color: 'white',
                                 fontWeight: 'bold',
                                 fontSize: '16px',
                                 letterSpacing: '0.5px'
@@ -158,7 +456,7 @@ const SimulationControlMenu = () => {
                             ✕
                         </button>
                     </div>
-                    
+
                     {/* Tabs */}
                     <div style={{
                         display: 'flex',
@@ -170,6 +468,7 @@ const SimulationControlMenu = () => {
                             { id: 'emergency', icon: '🚨', label: 'Emergency' },
                             { id: 'heaters', icon: '🔥', label: 'Heaters' },
                             { id: 'appliances', icon: '💥', label: 'Appliances' },
+                            { id: 'riscv', icon: '🔌', label: 'RISC-V' },
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -177,8 +476,8 @@ const SimulationControlMenu = () => {
                                 style={{
                                     flex: 1,
                                     padding: '10px 8px',
-                                    background: activeTab === tab.id 
-                                        ? 'linear-gradient(135deg, #4A90D9, #357ABD)' 
+                                    background: activeTab === tab.id
+                                        ? 'linear-gradient(135deg, #4A90D9, #357ABD)'
                                         : 'rgba(60,60,70,0.5)',
                                     border: 'none',
                                     borderRadius: '8px',
@@ -194,7 +493,7 @@ const SimulationControlMenu = () => {
                             </button>
                         ))}
                     </div>
-                    
+
                     {/* Content Area */}
                     <div style={{
                         padding: '16px',
@@ -210,7 +509,7 @@ const SimulationControlMenu = () => {
                                     <h4 style={{ margin: '0 0 12px 0', color: '#FF6B6B', fontSize: '14px' }}>
                                         ⚡ Quick Actions
                                     </h4>
-                                    
+
                                     <button
                                         onClick={triggerEmergency}
                                         style={{
@@ -229,7 +528,7 @@ const SimulationControlMenu = () => {
                                     >
                                         🚨 TRIGGER FULL EMERGENCY
                                     </button>
-                                    
+
                                     <button
                                         onClick={resetSimulation}
                                         style={{
@@ -247,12 +546,12 @@ const SimulationControlMenu = () => {
                                         ✅ Reset All Systems
                                     </button>
                                 </div>
-                                
+
                                 {/* Individual Controls */}
                                 <h4 style={{ margin: '0 0 12px 0', color: '#aaa', fontSize: '13px' }}>
                                     Individual Controls
                                 </h4>
-                                
+
                                 {/* Alarm Toggle */}
                                 <div style={{
                                     display: 'flex',
@@ -284,7 +583,7 @@ const SimulationControlMenu = () => {
                                         {alarmActive ? 'OFF' : 'ON'}
                                     </button>
                                 </div>
-                                
+
                                 {/* Chimney Toggle */}
                                 <div style={{
                                     display: 'flex',
@@ -323,20 +622,20 @@ const SimulationControlMenu = () => {
                                         {chimneyBlocked ? 'Unblock' : 'Block'}
                                     </button>
                                 </div>
-                                
+
                                 {/* Smoke Level Slider */}
                                 <div style={{
                                     padding: '12px',
                                     background: 'rgba(60,60,70,0.4)',
                                     borderRadius: '10px',
                                 }}>
-                                    <div style={{ 
-                                        display: 'flex', 
+                                    <div style={{
+                                        display: 'flex',
                                         justifyContent: 'space-between',
                                         marginBottom: '8px'
                                     }}>
                                         <span style={{ fontWeight: 'bold', fontSize: '13px' }}>💨 Smoke Level</span>
-                                        <span style={{ 
+                                        <span style={{
                                             color: smokeLevel > 50 ? '#FF6B6B' : '#4CAF50',
                                             fontWeight: 'bold'
                                         }}>
@@ -360,12 +659,12 @@ const SimulationControlMenu = () => {
                                 </div>
                             </div>
                         )}
-                        
+
                         {/* Heaters Tab */}
                         {activeTab === 'heaters' && (
                             <div>
-                                <div style={{ 
-                                    display: 'flex', 
+                                <div style={{
+                                    display: 'flex',
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
                                     marginBottom: '12px'
@@ -411,7 +710,7 @@ const SimulationControlMenu = () => {
                                         </button>
                                     </div>
                                 </div>
-                                
+
                                 {/* Info box explaining heater overload */}
                                 <div style={{
                                     background: 'rgba(255,140,66,0.15)',
@@ -424,7 +723,7 @@ const SimulationControlMenu = () => {
                                 }}>
                                     <strong>⚡ Overload:</strong> Simulates heater malfunction causing smoke & fire hazard. Click ⚡ to overload or click again to reset.
                                 </div>
-                                
+
                                 {heaterRooms.map(room => {
                                     const state = heaterStates[room.id] || { on: false, level: 1, overloaded: false };
                                     return (
@@ -433,24 +732,24 @@ const SimulationControlMenu = () => {
                                             alignItems: 'center',
                                             justifyContent: 'space-between',
                                             padding: '10px 12px',
-                                            background: state.overloaded 
-                                                ? 'rgba(255,50,50,0.3)' 
+                                            background: state.overloaded
+                                                ? 'rgba(255,50,50,0.3)'
                                                 : 'rgba(60,60,70,0.4)',
                                             borderRadius: '8px',
                                             marginBottom: '8px',
                                             border: state.overloaded ? '1px solid #FF4444' : 'none',
                                         }}>
                                             <div>
-                                                <div style={{ 
-                                                    fontWeight: 'bold', 
+                                                <div style={{
+                                                    fontWeight: 'bold',
                                                     fontSize: '12px',
                                                     color: state.overloaded ? '#FF6B6B' : 'white'
                                                 }}>
                                                     {room.name}
                                                 </div>
-                                                <div style={{ 
-                                                    fontSize: '10px', 
-                                                    color: state.overloaded ? '#FF8888' : '#888' 
+                                                <div style={{
+                                                    fontSize: '10px',
+                                                    color: state.overloaded ? '#FF8888' : '#888'
                                                 }}>
                                                     {state.overloaded ? '⚠️ OVERLOADED!' : (state.on ? `Level ${state.level}` : 'Off')}
                                                 </div>
@@ -492,12 +791,12 @@ const SimulationControlMenu = () => {
                                 })}
                             </div>
                         )}
-                        
+
                         {/* Appliances Tab */}
                         {activeTab === 'appliances' && (
                             <div>
-                                <div style={{ 
-                                    display: 'flex', 
+                                <div style={{
+                                    display: 'flex',
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
                                     marginBottom: '12px'
@@ -543,11 +842,11 @@ const SimulationControlMenu = () => {
                                         </button>
                                     </div>
                                 </div>
-                                
+
                                 <p style={{ fontSize: '11px', color: '#888', marginBottom: '16px' }}>
                                     Trigger electrical failures to simulate smoke and fire hazards. Click again to repair.
                                 </p>
-                                
+
                                 {appliances.map(appliance => {
                                     const state = explosionStates[appliance.id] || { exploded: false, smoking: false };
                                     return (
@@ -556,24 +855,24 @@ const SimulationControlMenu = () => {
                                             alignItems: 'center',
                                             justifyContent: 'space-between',
                                             padding: '12px',
-                                            background: state.exploded 
-                                                ? 'rgba(255,100,0,0.3)' 
+                                            background: state.exploded
+                                                ? 'rgba(255,100,0,0.3)'
                                                 : 'rgba(60,60,70,0.4)',
                                             borderRadius: '10px',
                                             marginBottom: '10px',
                                             border: state.exploded ? '1px solid #FF6600' : 'none',
                                         }}>
                                             <div>
-                                                <div style={{ 
-                                                    fontWeight: 'bold', 
+                                                <div style={{
+                                                    fontWeight: 'bold',
                                                     fontSize: '13px',
                                                     color: state.exploded ? '#FF8C42' : 'white'
                                                 }}>
                                                     {appliance.name}
                                                 </div>
-                                                <div style={{ 
-                                                    fontSize: '11px', 
-                                                    color: state.exploded ? '#FF8888' : '#888' 
+                                                <div style={{
+                                                    fontSize: '11px',
+                                                    color: state.exploded ? '#FF8888' : '#888'
                                                 }}>
                                                     {state.exploded ? '🔥 Malfunctioning!' : '✓ Normal'}
                                                 </div>
@@ -582,8 +881,8 @@ const SimulationControlMenu = () => {
                                                 onClick={() => triggerExplosion(appliance.id)}
                                                 style={{
                                                     padding: '10px 16px',
-                                                    background: state.exploded 
-                                                        ? 'linear-gradient(135deg, #4CAF50, #388E3C)' 
+                                                    background: state.exploded
+                                                        ? 'linear-gradient(135deg, #4CAF50, #388E3C)'
                                                         : 'linear-gradient(135deg, #FF6B35, #FF4444)',
                                                     border: 'none',
                                                     borderRadius: '8px',
@@ -600,8 +899,13 @@ const SimulationControlMenu = () => {
                                 })}
                             </div>
                         )}
+
+                        {/* RISC-V Tab */}
+                        {activeTab === 'riscv' && (
+                            <RiscvTabContent />
+                        )}
                     </div>
-                    
+
                     {/* Status Bar */}
                     <div style={{
                         padding: '12px 16px',
@@ -632,7 +936,7 @@ const SimulationControlMenu = () => {
                     </div>
                 </div>
             )}
-            
+
             {/* CSS for pulse animation */}
             <style>{`
                 @keyframes pulse {

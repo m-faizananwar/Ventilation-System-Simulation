@@ -10,21 +10,21 @@ export const AlarmLight = ({ position, roomName }) => {
     const { alarmActive } = useSimulation();
     const flashPhase = useRef(0);
     const frameCount = useRef(0);
-    
+
     useFrame((state, delta) => {
         if (!alarmActive) {
             flashPhase.current = 0;
             return;
         }
-        
+
         // Skip frames for performance
         frameCount.current++;
         if (frameCount.current % 2 !== 0) return;
-        
+
         // Fast flashing effect
         flashPhase.current += delta * 16; // Compensate for frame skip
         const intensity = Math.sin(flashPhase.current) > 0 ? 1 : 0.15;
-        
+
         if (lightRef.current) {
             lightRef.current.intensity = intensity * 15;
         }
@@ -32,7 +32,7 @@ export const AlarmLight = ({ position, roomName }) => {
             glowRef.current.material.emissiveIntensity = intensity * 8;
         }
     });
-    
+
     return (
         <group position={position}>
             {/* Alarm housing - ceiling mount */}
@@ -40,11 +40,11 @@ export const AlarmLight = ({ position, roomName }) => {
                 <cylinderGeometry args={[0.08, 0.1, 0.05, 8]} />
                 <meshStandardMaterial color="#333333" roughness={0.7} />
             </mesh>
-            
+
             {/* Red dome light */}
             <mesh ref={glowRef} position={[0, -0.04, 0]}>
                 <sphereGeometry args={[0.08, 8, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
-                <meshStandardMaterial 
+                <meshStandardMaterial
                     color={alarmActive ? "#FF0000" : "#440000"}
                     emissive={alarmActive ? "#FF0000" : "#000000"}
                     emissiveIntensity={alarmActive ? 5 : 0}
@@ -53,24 +53,24 @@ export const AlarmLight = ({ position, roomName }) => {
                     toneMapped={false}
                 />
             </mesh>
-            
+
             {/* Inner bulb */}
             <Sphere args={[0.04, 8, 8]} position={[0, -0.02, 0]}>
-                <meshStandardMaterial 
+                <meshStandardMaterial
                     color={alarmActive ? "#FF3300" : "#330000"}
                     emissive={alarmActive ? "#FF0000" : "#000000"}
                     emissiveIntensity={alarmActive ? 10 : 0}
                     toneMapped={false}
                 />
             </Sphere>
-            
+
             {/* Single point light for room illumination when alarm is active */}
             {alarmActive && (
-                <pointLight 
+                <pointLight
                     ref={lightRef}
-                    position={[0, -0.1, 0]} 
-                    color="#FF0000" 
-                    intensity={15} 
+                    position={[0, -0.1, 0]}
+                    color="#FF0000"
+                    intensity={15}
                     distance={15}
                     decay={1.5}
                 />
@@ -86,21 +86,21 @@ export const WallAlarmLight = ({ position, rotation = [0, 0, 0] }) => {
     const { alarmActive } = useSimulation();
     const flashPhase = useRef(0);
     const frameCount = useRef(0);
-    
+
     useFrame((state, delta) => {
         if (!alarmActive) {
             flashPhase.current = 0;
             return;
         }
-        
+
         // Skip frames for performance
         frameCount.current++;
         if (frameCount.current % 2 !== 0) return;
-        
+
         // Strobe effect - quick on/off
         flashPhase.current += delta * 24; // Compensate for frame skip
         const flash = Math.sin(flashPhase.current) > 0.7 ? 1 : 0;
-        
+
         if (lightRef.current) {
             lightRef.current.intensity = flash * 20;
         }
@@ -108,7 +108,7 @@ export const WallAlarmLight = ({ position, rotation = [0, 0, 0] }) => {
             strobeRef.current.material.emissiveIntensity = flash * 12;
         }
     });
-    
+
     return (
         <group position={position} rotation={rotation}>
             {/* Wall mount base */}
@@ -116,11 +116,11 @@ export const WallAlarmLight = ({ position, rotation = [0, 0, 0] }) => {
                 <boxGeometry args={[0.12, 0.15, 0.04]} />
                 <meshStandardMaterial color="#EEEEEE" roughness={0.5} />
             </mesh>
-            
+
             {/* Strobe lens */}
             <mesh ref={strobeRef} position={[0, 0, 0.05]}>
                 <boxGeometry args={[0.1, 0.12, 0.03]} />
-                <meshStandardMaterial 
+                <meshStandardMaterial
                     color={alarmActive ? "#FF0000" : "#880000"}
                     emissive={alarmActive ? "#FF0000" : "#000000"}
                     emissiveIntensity={alarmActive ? 8 : 0}
@@ -129,30 +129,30 @@ export const WallAlarmLight = ({ position, rotation = [0, 0, 0] }) => {
                     toneMapped={false}
                 />
             </mesh>
-            
+
             {/* Speaker grille at bottom */}
             <mesh position={[0, -0.05, 0.04]}>
                 <boxGeometry args={[0.06, 0.03, 0.01]} />
                 <meshStandardMaterial color="#222222" roughness={0.8} />
             </mesh>
-            
+
             {/* Status LED */}
             <mesh position={[0.04, 0.05, 0.05]}>
                 <sphereGeometry args={[0.008, 6, 6]} />
-                <meshStandardMaterial 
+                <meshStandardMaterial
                     color={alarmActive ? "#00FF00" : "#004400"}
                     emissive={alarmActive ? "#00FF00" : "#000000"}
                     emissiveIntensity={alarmActive ? 0.5 : 0}
                 />
             </mesh>
-            
+
             {/* Single light source */}
             {alarmActive && (
-                <pointLight 
+                <pointLight
                     ref={lightRef}
-                    position={[0, 0, 0.3]} 
-                    color="#FF0000" 
-                    intensity={20} 
+                    position={[0, 0, 0.3]}
+                    color="#FF0000"
+                    intensity={20}
                     distance={12}
                     decay={1.5}
                 />
@@ -167,14 +167,14 @@ export const SmokeDetector = ({ position }) => {
     const { alarmActive, smokeLevel } = useSimulation();
     const blinkPhase = useRef(0);
     const frameCount = useRef(0);
-    
+
     useFrame((state, delta) => {
         // Skip frames for performance
         frameCount.current++;
         if (frameCount.current % 3 !== 0) return;
-        
+
         blinkPhase.current += delta * (alarmActive ? 30 : 1.5); // Compensate for frame skip
-        
+
         if (ledRef.current) {
             if (alarmActive) {
                 // Fast red blink during alarm
@@ -189,7 +189,7 @@ export const SmokeDetector = ({ position }) => {
             }
         }
     });
-    
+
     return (
         <group position={position}>
             {/* Detector body */}
@@ -197,23 +197,23 @@ export const SmokeDetector = ({ position }) => {
                 <cylinderGeometry args={[0.08, 0.1, 0.04, 12]} />
                 <meshStandardMaterial color="#F5F5F5" roughness={0.4} />
             </mesh>
-            
+
             {/* Center dome */}
             <mesh position={[0, -0.01, 0]}>
                 <sphereGeometry args={[0.04, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2]} />
                 <meshStandardMaterial color="#E0E0E0" roughness={0.5} />
             </mesh>
-            
+
             {/* LED indicator */}
             <mesh ref={ledRef} position={[0.05, -0.02, 0]}>
                 <sphereGeometry args={[0.008, 6, 6]} />
-                <meshStandardMaterial 
+                <meshStandardMaterial
                     color="#00FF00"
                     emissive="#00FF00"
                     emissiveIntensity={0.1}
                 />
             </mesh>
-            
+
             {/* Simplified vent slots - reduced from 6 to 4 */}
             {[0, 1, 2, 3].map((i) => (
                 <mesh key={i} position={[0, -0.015, 0]} rotation={[0, (i / 4) * Math.PI * 2, 0]}>
@@ -225,4 +225,143 @@ export const SmokeDetector = ({ position }) => {
     );
 };
 
+// Room status light - shows alert level with colors controlled by RISC-V
+export const RoomStatusLight = ({ position, roomId, rotation = [0, 0, 0] }) => {
+    const lightRef = useRef();
+    const glowRef = useRef();
+    const { roomAlertLevels, ventilationStates, alarmActive } = useSimulation();
+    const flashPhase = useRef(0);
+    const frameCount = useRef(0);
+
+    const alertLevel = roomAlertLevels[roomId] || 'normal';
+    const ventilation = ventilationStates[roomId] || { active: false };
+
+    // Color mapping for alert levels
+    const getColors = () => {
+        switch (alertLevel) {
+            case 'critical':
+                return { main: '#FF0000', emissive: '#FF0000', intensity: 12 };
+            case 'danger':
+                return { main: '#FF3300', emissive: '#FF2200', intensity: 8 };
+            case 'warning':
+                return { main: '#FFAA00', emissive: '#FF8800', intensity: 5 };
+            default:
+                return { main: '#00FF00', emissive: '#00CC00', intensity: 2 };
+        }
+    };
+
+    const colors = getColors();
+
+    useFrame((state, delta) => {
+        frameCount.current++;
+        if (frameCount.current % 2 !== 0) return;
+
+        flashPhase.current += delta * (alertLevel === 'critical' ? 20 : alertLevel === 'danger' ? 10 : 2);
+
+        const shouldFlash = alertLevel === 'critical' || alertLevel === 'danger';
+        const flashValue = shouldFlash ? (Math.sin(flashPhase.current) > 0 ? 1 : 0.2) : 1;
+
+        if (glowRef.current) {
+            glowRef.current.material.emissiveIntensity = colors.intensity * flashValue;
+        }
+        if (lightRef.current) {
+            lightRef.current.intensity = colors.intensity * 2 * flashValue;
+        }
+    });
+
+    return (
+        <group position={position} rotation={rotation}>
+            {/* Light housing */}
+            <mesh>
+                <boxGeometry args={[0.15, 0.15, 0.06]} />
+                <meshStandardMaterial color="#333333" roughness={0.6} />
+            </mesh>
+
+            {/* Main status light */}
+            <mesh ref={glowRef} position={[0, 0, 0.035]}>
+                <circleGeometry args={[0.05, 16]} />
+                <meshStandardMaterial
+                    color={colors.main}
+                    emissive={colors.emissive}
+                    emissiveIntensity={colors.intensity}
+                    toneMapped={false}
+                />
+            </mesh>
+
+            {/* Ventilation indicator (blue when active) */}
+            {ventilation.active && (
+                <mesh position={[0.04, -0.04, 0.035]}>
+                    <circleGeometry args={[0.015, 8]} />
+                    <meshStandardMaterial
+                        color="#00AAFF"
+                        emissive="#0088FF"
+                        emissiveIntensity={4}
+                        toneMapped={false}
+                    />
+                </mesh>
+            )}
+
+            {/* Point light for glow effect */}
+            <pointLight
+                ref={lightRef}
+                position={[0, 0, 0.1]}
+                color={colors.emissive}
+                intensity={colors.intensity * 2}
+                distance={3}
+                decay={2}
+            />
+        </group>
+    );
+};
+
+// Ventilation fan visual indicator
+export const VentilationIndicator = ({ position, roomId }) => {
+    const fanRef = useRef();
+    const { ventilationStates } = useSimulation();
+    const ventilation = ventilationStates[roomId] || { active: false, level: 'OFF' };
+
+    useFrame((state, delta) => {
+        if (fanRef.current && ventilation.active) {
+            const speed = ventilation.level === 'HIGH' ? 15 : ventilation.level === 'MEDIUM' ? 8 : 4;
+            fanRef.current.rotation.z += delta * speed;
+        }
+    });
+
+    return (
+        <group position={position}>
+            {/* Vent grille */}
+            <mesh>
+                <boxGeometry args={[0.4, 0.4, 0.05]} />
+                <meshStandardMaterial color="#DDDDDD" roughness={0.4} />
+            </mesh>
+
+            {/* Fan blades */}
+            <group ref={fanRef} position={[0, 0, -0.03]}>
+                {[0, 1, 2, 3].map(i => (
+                    <mesh key={i} rotation={[0, 0, (i * Math.PI) / 2]}>
+                        <boxGeometry args={[0.15, 0.03, 0.01]} />
+                        <meshStandardMaterial
+                            color={ventilation.active ? "#666666" : "#888888"}
+                        />
+                    </mesh>
+                ))}
+            </group>
+
+            {/* Active indicator light */}
+            {ventilation.active && (
+                <mesh position={[0.12, 0.12, 0.03]}>
+                    <sphereGeometry args={[0.02, 8, 8]} />
+                    <meshStandardMaterial
+                        color="#00FF00"
+                        emissive="#00FF00"
+                        emissiveIntensity={3}
+                        toneMapped={false}
+                    />
+                </mesh>
+            )}
+        </group>
+    );
+};
+
 export default AlarmLight;
+

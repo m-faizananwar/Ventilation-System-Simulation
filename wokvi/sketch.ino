@@ -1,5 +1,6 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
 
 // --- 1. CONFIGURATION ---
 const char* ssid = "Wokwi-GUEST";
@@ -7,12 +8,17 @@ const char* password = "";
 
 // MQTT Broker (The "Bridge" to your 3D Simulation)
 const char* mqtt_server = "broker.hivemq.com";
-const char* mqtt_topic = "smart-corridor/monitor";
+const int mqtt_port = 1883;
+
+// MQTT Topics
+const char* TOPIC_MONITOR = "smart-corridor/monitor";       // We publish status here
+const char* TOPIC_SENSORS = "smart-corridor/sensors";       // We receive from simulation
+const char* TOPIC_COMMANDS = "smart-corridor/commands";     // We publish commands here
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-// --- 2. PIN DEFINITIONS (Must match diagram.json) ---
+// --- 2. PIN DEFINITIONS ---
 #define PIN_PM25   0   // Analog Potentiometer (Left)
 #define PIN_CO2    1   // Analog Potentiometer (Right)
 #define PIN_SMOKE  3   // Slide Switch (Digital)
@@ -22,112 +28,237 @@ PubSubClient client(espClient);
 #define LED_GREEN  10  // Safe LED
 
 // --- 3. THRESHOLDS ---
-const int THRESH_PM25 = 100;   // Dust limit
-const int THRESH_CO2 = 1000;   // CO2 limit (ppm)
+const int THRESH_SMOKE = 30;    // Smoke level %
+const int THRESH_PM25 = 80;     // PM2.5 limit (µg/m³)
+const int THRESH_CO2 = 800;     // CO2 limit (ppm)
+const int THRESH_TEMP = 35;     // Temperature limit (°C)
+
+// --- 4. STATE VARIABLES ---
+// Data from 3D Simulation
+int sim_smoke = 0;
+int sim_co2 = 400;
+int sim_pm25 = 15;
+int sim_temp = 22;
+bool sim_data_received = false;
+unsigned long last_sim_data = 0;
+
+// Combined state
+bool ventilation_active = false;
+String current_status = "SAFE";
+
+// --- MQTT Callback for receiving sensor data from 3D simulation ---
+void mqttCallback(char* topic, byte* payload, unsigned int length) {
+    Serial.print("📨 Received on ");
+    Serial.print(topic);
+    Serial.print(": ");
+    
+    // Convert payload to string
+    char message[length + 1];
+    memcpy(message, payload, length);
+    message[length] = '\0';
+    Serial.println(message);
+    
+    // Parse JSON from 3D simulation
+    if (strcmp(topic, TOPIC_SENSORS) == 0) {
+        StaticJsonDocument<256> doc;
+        DeserializationError error = deserializeJson(doc, message);
+        
+        if (!error) {
+            sim_smoke = doc["smoke"] | 0;
+            sim_co2 = doc["co2"] | 400;
+            sim_pm25 = doc["pm25"] | 15;
+            sim_temp = doc["temp"] | 22;
+            sim_data_received = true;
+            last_sim_data = millis();
+            
+            Serial.println("✅ Parsed simulation data:");
+            Serial.print("  Smoke: "); Serial.println(sim_smoke);
+            Serial.print("  CO2: "); Serial.println(sim_co2);
+            Serial.print("  PM2.5: "); Serial.println(sim_pm25);
+            Serial.print("  Temp: "); Serial.println(sim_temp);
+        } else {
+            Serial.print("❌ JSON parse error: ");
+            Serial.println(error.c_str());
+        }
+    }
+}
 
 void setup() {
-  Serial.begin(115200);
+    Serial.begin(115200);
+    Serial.println("\n🚀 Smart Corridor RISC-V Controller Starting...");
 
-  // Configure Pins
-  pinMode(PIN_SMOKE, INPUT); // Digital Input
-  pinMode(LED_GREEN, OUTPUT);
-  pinMode(LED_RED, OUTPUT);
-  pinMode(LED_BLUE, OUTPUT);
+    // Configure Pins
+    pinMode(PIN_SMOKE, INPUT);
+    pinMode(LED_GREEN, OUTPUT);
+    pinMode(LED_RED, OUTPUT);
+    pinMode(LED_BLUE, OUTPUT);
+    
+    // Initial state - all off
+    digitalWrite(LED_GREEN, LOW);
+    digitalWrite(LED_RED, LOW);
+    digitalWrite(LED_BLUE, LOW);
 
-  // Connect to WiFi
-  Serial.print("Connecting to WiFi");
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println(" Connected!");
+    // Connect to WiFi
+    Serial.print("📶 Connecting to WiFi");
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+        digitalWrite(LED_RED, !digitalRead(LED_RED)); // Blink red while connecting
+    }
+    Serial.println(" Connected!");
+    digitalWrite(LED_RED, LOW);
 
-  // Setup MQTT
-  client.setServer(mqtt_server, 1883);
+    // Setup MQTT with callback
+    client.setServer(mqtt_server, mqtt_port);
+    client.setCallback(mqttCallback);
+    client.setBufferSize(512);
 }
 
 void reconnect() {
-  // Loop until we're reconnected
-  while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    // Create a random client ID
-    String clientId = "RISCV-Client-";
-    clientId += String(random(0xffff), HEX);
-    
-    if (client.connect(clientId.c_str())) {
-      Serial.println("connected");
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      delay(5000);
+    while (!client.connected()) {
+        Serial.print("🔗 Attempting MQTT connection...");
+        String clientId = "RISCV-Controller-";
+        clientId += String(random(0xffff), HEX);
+        
+        if (client.connect(clientId.c_str())) {
+            Serial.println("connected!");
+            
+            // Subscribe to sensor data from 3D simulation
+            client.subscribe(TOPIC_SENSORS);
+            Serial.print("📡 Subscribed to: ");
+            Serial.println(TOPIC_SENSORS);
+            
+            // Show green LED briefly on connect
+            digitalWrite(LED_GREEN, HIGH);
+            delay(200);
+            digitalWrite(LED_GREEN, LOW);
+        } else {
+            Serial.print("failed, rc=");
+            Serial.print(client.state());
+            Serial.println(" retry in 3s");
+            digitalWrite(LED_RED, HIGH);
+            delay(3000);
+            digitalWrite(LED_RED, LOW);
+        }
     }
-  }
+}
+
+void publishCommand(const char* action, const char* room, const char* level, bool alarm) {
+    StaticJsonDocument<256> doc;
+    doc["action"] = action;
+    doc["room"] = room;
+    doc["level"] = level;
+    doc["alarm"] = alarm;
+    doc["timestamp"] = millis();
+    
+    char buffer[256];
+    serializeJson(doc, buffer);
+    
+    client.publish(TOPIC_COMMANDS, buffer);
+    Serial.print("📤 Command sent: ");
+    Serial.println(buffer);
 }
 
 void loop() {
-  if (!client.connected()) {
-    reconnect();
-  }
-  client.loop();
+    if (!client.connected()) {
+        reconnect();
+    }
+    client.loop();
 
-  // --- 4. READ SENSORS ---
-  
-  // 1. PM2.5 (Pin 0): Map 0-4095 (Raw) to 0-200 (ug/m3)
-  int raw_pm25 = analogRead(PIN_PM25);
-  int val_pm25 = map(raw_pm25, 0, 4095, 0, 200);
+    // --- READ LOCAL SENSORS (Physical potentiometers on Wokwi) ---
+    int raw_pm25 = analogRead(PIN_PM25);
+    int local_pm25 = map(raw_pm25, 0, 4095, 0, 200);
+    
+    int raw_co2 = analogRead(PIN_CO2);
+    int local_co2 = map(raw_co2, 0, 4095, 400, 2000);
+    
+    int local_smoke = digitalRead(PIN_SMOKE);
 
-  // 2. CO2 (Pin 1): Map 0-4095 (Raw) to 400-2000 (ppm)
-  int raw_co2 = analogRead(PIN_CO2);
-  int val_co2 = map(raw_co2, 0, 4095, 400, 2000);
+    // --- COMBINE DATA: Use MAX of local and simulation values ---
+    int effective_smoke = max(local_smoke * 100, sim_smoke);  // Local smoke is 0 or 100
+    int effective_co2 = max(local_co2, sim_co2);
+    int effective_pm25 = max(local_pm25, sim_pm25);
+    int effective_temp = sim_temp;  // Only from simulation
 
-  // 3. SMOKE (Pin 3): Digital Read (0 or 1)
-  int val_smoke = digitalRead(PIN_SMOKE);
+    // --- RISC-V STYLE DECISION LOGIC ---
+    bool need_ventilation = false;
+    String status_msg = "SAFE";
+    String alert_level = "normal";
 
-  // --- 5. LOGIC & CONTROL ---
-  bool unsafe = false;
-  String status_msg = "SAFE";
+    // Priority 1: Smoke Detection (CRITICAL)
+    if (effective_smoke > THRESH_SMOKE) {
+        need_ventilation = true;
+        status_msg = "CRITICAL: SMOKE DETECTED";
+        alert_level = "critical";
+    }
+    // Priority 2: High Temperature (DANGER)
+    else if (effective_temp > THRESH_TEMP) {
+        need_ventilation = true;
+        status_msg = "DANGER: HIGH TEMPERATURE";
+        alert_level = "danger";
+    }
+    // Priority 3: High PM2.5 (WARNING)
+    else if (effective_pm25 > THRESH_PM25) {
+        need_ventilation = true;
+        status_msg = "WARNING: HIGH PM2.5";
+        alert_level = "warning";
+    }
+    // Priority 4: High CO2 (WARNING)
+    else if (effective_co2 > THRESH_CO2) {
+        need_ventilation = true;
+        status_msg = "WARNING: HIGH CO2";
+        alert_level = "warning";
+    }
 
-  // Check Smoke First (Highest Priority)
-  if (val_smoke == HIGH) {
-    unsafe = true;
-    status_msg = "CRITICAL: SMOKE DETECTED";
-  } 
-  // Check Dust
-  else if (val_pm25 > THRESH_PM25) {
-    unsafe = true;
-    status_msg = "WARNING: HIGH DUST";
-  } 
-  // Check CO2
-  else if (val_co2 > THRESH_CO2) {
-    unsafe = true;
-    status_msg = "WARNING: HIGH CO2";
-  }
+    // --- ACTUATE LOCAL HARDWARE ---
+    if (need_ventilation) {
+        digitalWrite(LED_GREEN, LOW);
+        digitalWrite(LED_RED, HIGH);
+        digitalWrite(LED_BLUE, HIGH);  // Fan ON
+    } else {
+        digitalWrite(LED_GREEN, HIGH);
+        digitalWrite(LED_RED, LOW);
+        digitalWrite(LED_BLUE, LOW);   // Fan OFF
+    }
 
-  // --- 6. ACTUATE HARDWARE ---
-  if (unsafe) {
-    digitalWrite(LED_GREEN, LOW);
-    digitalWrite(LED_RED, HIGH);  // Red Light ON
-    digitalWrite(LED_BLUE, HIGH); // Fan/Servo ON
-  } else {
-    digitalWrite(LED_GREEN, HIGH); // Green Light ON
-    digitalWrite(LED_RED, LOW);
-    digitalWrite(LED_BLUE, LOW);
-  }
+    // --- SEND COMMANDS TO 3D SIMULATION ---
+    // Only send if state changed
+    static bool prev_ventilation = false;
+    static String prev_status = "";
+    
+    if (need_ventilation != prev_ventilation || status_msg != prev_status) {
+        if (need_ventilation) {
+            // Activate ventilation in kitchen (most common source)
+            publishCommand("ACTIVATE_VENT", "kitchen", "HIGH", true);
+            publishCommand("SET_ALERT", "kitchen", alert_level.c_str(), true);
+            
+            // If critical, activate all rooms
+            if (alert_level == "critical") {
+                publishCommand("GLOBAL_ALARM", "", "critical", true);
+            }
+        } else {
+            publishCommand("DEACTIVATE_VENT", "kitchen", "OFF", false);
+            publishCommand("SET_ALERT", "kitchen", "normal", false);
+        }
+        
+        prev_ventilation = need_ventilation;
+        prev_status = status_msg;
+    }
 
-  // --- 7. SEND DATA TO 3D TWIN ---
-  // Create JSON: {"pm25": 120, "co2": 800, "smoke": 1, "status": "CRITICAL..."}
-  String jsonPayload = "{\"pm25\": " + String(val_pm25) + 
-                       ", \"co2\": " + String(val_co2) + 
-                       ", \"smoke\": " + String(val_smoke) + 
-                       ", \"status\": \"" + status_msg + "\"}";
-  
-  // Publish to Internet
-  client.publish(mqtt_topic, jsonPayload.c_str());
-  
-  // Debug Print
-  Serial.println(jsonPayload);
+    // --- PUBLISH STATUS TO MONITOR TOPIC ---
+    String jsonPayload = "{\"pm25\": " + String(effective_pm25) + 
+                         ", \"co2\": " + String(effective_co2) + 
+                         ", \"smoke\": " + String(effective_smoke) +
+                         ", \"temp\": " + String(effective_temp) +
+                         ", \"ventilation\": " + String(need_ventilation ? "true" : "false") +
+                         ", \"status\": \"" + status_msg + 
+                         "\", \"source\": \"" + (sim_data_received ? "combined" : "local") + "\"}";
+    
+    client.publish(TOPIC_MONITOR, jsonPayload.c_str());
+    
+    // Debug Print
+    Serial.println(jsonPayload);
 
-  delay(1000); // Update every second
+    delay(1000);
 }
