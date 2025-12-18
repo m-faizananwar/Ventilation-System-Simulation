@@ -7,7 +7,8 @@ import { useSimulation } from './SimulationContext';
 export const SmokeEffect = ({ position, intensity = 1, spread = 3 }) => {
     const { smokeLevel, chimneyBlocked, alarmActive } = useSimulation();
     const particlesRef = useRef();
-    const particleCount = 200;
+    const frameCount = useRef(0);
+    const particleCount = 80; // Reduced from 200
     
     // Only show smoke when there's smoke level or chimney is blocked
     const showSmoke = smokeLevel > 0 || chimneyBlocked;
@@ -37,12 +38,17 @@ export const SmokeEffect = ({ position, intensity = 1, spread = 3 }) => {
     useFrame((state, delta) => {
         if (!particlesRef.current || !showSmoke) return;
         
+        // Skip every other frame for performance
+        frameCount.current++;
+        if (frameCount.current % 2 !== 0) return;
+        
         const positions = particlesRef.current.geometry.attributes.position.array;
         const effectiveIntensity = (smokeLevel / 100) * intensity;
+        const adjustedDelta = delta * 2; // Compensate for frame skipping
         
         for (let i = 0; i < particleCount; i++) {
             // Update lifetime
-            particles.lifetimes[i] += delta * 0.3;
+            particles.lifetimes[i] += adjustedDelta * 0.3;
             
             if (particles.lifetimes[i] > 1) {
                 // Reset particle
@@ -55,10 +61,6 @@ export const SmokeEffect = ({ position, intensity = 1, spread = 3 }) => {
                 positions[i * 3] += particles.velocities[i * 3] * effectiveIntensity;
                 positions[i * 3 + 1] += particles.velocities[i * 3 + 1] * effectiveIntensity * 2;
                 positions[i * 3 + 2] += particles.velocities[i * 3 + 2] * effectiveIntensity;
-                
-                // Add some turbulence
-                positions[i * 3] += Math.sin(state.clock.elapsedTime + i) * 0.002;
-                positions[i * 3 + 2] += Math.cos(state.clock.elapsedTime + i * 0.5) * 0.002;
             }
         }
         
@@ -120,7 +122,8 @@ export const RoomSmokeOverlay = ({ position, size = [10, 4, 10] }) => {
 export const ExplosionEffect = ({ position, active }) => {
     const sparksRef = useRef();
     const fireRef = useRef();
-    const sparkCount = 50;
+    const frameCount = useRef(0);
+    const sparkCount = 25; // Reduced from 50
     
     const sparks = useMemo(() => {
         const positions = new Float32Array(sparkCount * 3);
@@ -145,11 +148,16 @@ export const ExplosionEffect = ({ position, active }) => {
     useFrame((state, delta) => {
         if (!sparksRef.current || !active) return;
         
+        // Skip frames for performance
+        frameCount.current++;
+        if (frameCount.current % 2 !== 0) return;
+        
         const positions = sparksRef.current.geometry.attributes.position.array;
+        const adjustedDelta = delta * 2;
         
         for (let i = 0; i < sparkCount; i++) {
             positions[i * 3] += sparks.velocities[i * 3];
-            positions[i * 3 + 1] += sparks.velocities[i * 3 + 1] - delta * 0.5;
+            positions[i * 3 + 1] += sparks.velocities[i * 3 + 1] - adjustedDelta * 0.5;
             positions[i * 3 + 2] += sparks.velocities[i * 3 + 2];
             
             // Reset if too far
@@ -167,8 +175,8 @@ export const ExplosionEffect = ({ position, active }) => {
         
         sparksRef.current.geometry.attributes.position.needsUpdate = true;
         
-        // Flicker fire light
-        if (fireRef.current) {
+        // Flicker fire light less frequently
+        if (fireRef.current && frameCount.current % 4 === 0) {
             fireRef.current.intensity = 1 + Math.random() * 0.5;
         }
     });
