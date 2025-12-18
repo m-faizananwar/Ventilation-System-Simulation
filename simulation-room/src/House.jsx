@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Wall, Floor, Door, GlassWindow, CeilingLight, FLOOR_COLORS, InteractiveDoor } from './HouseStructure';
-import { Box, Cylinder, Sphere, useKeyboardControls } from '@react-three/drei';
+import { Box, Cylinder, Sphere, useKeyboardControls, Html } from '@react-three/drei';
 import { RigidBody } from '@react-three/rapier';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -232,15 +232,38 @@ const Armchair = ({ position, rotation = [0, 0, 0] }) => (
 
 const Table = ({ position, args = [1.5, 0.8, 0.8], color = "#4A3728" }) => (
     <RigidBody type="fixed" position={position}>
-        {/* Top */}
-        <Box args={[args[0], 0.05, args[2]]} position={[0, args[1], 0]}>
-            <meshStandardMaterial color={color} />
+        {/* Tabletop - thicker for realism */}
+        <Box args={[args[0], 0.06, args[2]]} position={[0, args[1], 0]}>
+            <meshStandardMaterial color={color} roughness={0.4} />
         </Box>
-        {/* Legs */}
-        <Box args={[0.1, args[1], 0.1]} position={[args[0] / 2 - 0.1, args[1] / 2, args[2] / 2 - 0.1]}><meshStandardMaterial color={color} /></Box>
-        <Box args={[0.1, args[1], 0.1]} position={[-args[0] / 2 + 0.1, args[1] / 2, args[2] / 2 - 0.1]}><meshStandardMaterial color={color} /></Box>
-        <Box args={[0.1, args[1], 0.1]} position={[args[0] / 2 - 0.1, args[1] / 2, -args[2] / 2 + 0.1]}><meshStandardMaterial color={color} /></Box>
-        <Box args={[0.1, args[1], 0.1]} position={[-args[0] / 2 + 0.1, args[1] / 2, -args[2] / 2 + 0.1]}><meshStandardMaterial color={color} /></Box>
+        {/* Tabletop edge trim */}
+        <Box args={[args[0] + 0.02, 0.03, args[2] + 0.02]} position={[0, args[1] - 0.03, 0]}>
+            <meshStandardMaterial color={color} roughness={0.5} />
+        </Box>
+        {/* Legs - tapered elegant wooden legs */}
+        <mesh position={[args[0] / 2 - 0.1, args[1] / 2, args[2] / 2 - 0.1]}>
+            <cylinderGeometry args={[0.04, 0.06, args[1], 6]} />
+            <meshStandardMaterial color={color} roughness={0.5} />
+        </mesh>
+        <mesh position={[-args[0] / 2 + 0.1, args[1] / 2, args[2] / 2 - 0.1]}>
+            <cylinderGeometry args={[0.04, 0.06, args[1], 6]} />
+            <meshStandardMaterial color={color} roughness={0.5} />
+        </mesh>
+        <mesh position={[args[0] / 2 - 0.1, args[1] / 2, -args[2] / 2 + 0.1]}>
+            <cylinderGeometry args={[0.04, 0.06, args[1], 6]} />
+            <meshStandardMaterial color={color} roughness={0.5} />
+        </mesh>
+        <mesh position={[-args[0] / 2 + 0.1, args[1] / 2, -args[2] / 2 + 0.1]}>
+            <cylinderGeometry args={[0.04, 0.06, args[1], 6]} />
+            <meshStandardMaterial color={color} roughness={0.5} />
+        </mesh>
+        {/* Support rails under table */}
+        <Box args={[args[0] - 0.3, 0.04, 0.04]} position={[0, args[1] - 0.15, args[2] / 2 - 0.1]}>
+            <meshStandardMaterial color={color} roughness={0.5} />
+        </Box>
+        <Box args={[args[0] - 0.3, 0.04, 0.04]} position={[0, args[1] - 0.15, -args[2] / 2 + 0.1]}>
+            <meshStandardMaterial color={color} roughness={0.5} />
+        </Box>
     </RigidBody>
 );
 
@@ -394,17 +417,36 @@ const Chair = ({ position, rotation = [0, 0, 0] }) => (
 const DiningChair = ({ position, rotation = [0, 0, 0] }) => (
     <group position={position} rotation={rotation}>
         <RigidBody type="fixed">
-            <Box args={[0.45, 0.05, 0.45]} position={[0, 0.45, 0]}>
+            {/* Seat */}
+            <Box args={[0.42, 0.04, 0.42]} position={[0, 0.45, 0]}>
                 <meshStandardMaterial color="#5C4033" />
             </Box>
-            <Box args={[0.45, 0.5, 0.05]} position={[0, 0.75, -0.2]}>
+            {/* Seat cushion */}
+            <Box args={[0.38, 0.03, 0.38]} position={[0, 0.48, 0]}>
+                <meshStandardMaterial color="#8B6914" />
+            </Box>
+            {/* Backrest frame */}
+            <Box args={[0.42, 0.55, 0.04]} position={[0, 0.78, -0.19]}>
                 <meshStandardMaterial color="#5C4033" />
             </Box>
-            {[[-0.18, -0.18], [-0.18, 0.18], [0.18, -0.18], [0.18, 0.18]].map(([x, z], i) => (
-                <Cylinder key={i} args={[0.025, 0.025, 0.45, 8]} position={[x, 0.225, z]}>
+            {/* Backrest cushion */}
+            <Box args={[0.36, 0.4, 0.02]} position={[0, 0.75, -0.16]}>
+                <meshStandardMaterial color="#8B6914" />
+            </Box>
+            {/* Legs - tapered wooden legs */}
+            {[[-0.17, -0.17], [-0.17, 0.17], [0.17, -0.17], [0.17, 0.17]].map(([x, z], i) => (
+                <mesh key={i} position={[x, 0.225, z]}>
+                    <cylinderGeometry args={[0.02, 0.028, 0.45, 6]} />
                     <meshStandardMaterial color="#5C4033" />
-                </Cylinder>
+                </mesh>
             ))}
+            {/* Cross supports between legs */}
+            <Box args={[0.34, 0.02, 0.02]} position={[0, 0.15, -0.17]}>
+                <meshStandardMaterial color="#5C4033" />
+            </Box>
+            <Box args={[0.34, 0.02, 0.02]} position={[0, 0.15, 0.17]}>
+                <meshStandardMaterial color="#5C4033" />
+            </Box>
         </RigidBody>
     </group>
 );
@@ -1135,6 +1177,214 @@ const Chandelier = ({ position }) => (
     </group>
 );
 
+// Animated Ceiling Ventilation Fan for Kitchen
+const CeilingFan = ({ position, speed = 1 }) => {
+    const fanRef = useRef();
+
+    useFrame((state) => {
+        if (!fanRef.current) return;
+        // Rotate the fan blades
+        fanRef.current.rotation.y += 0.08 * speed;
+    });
+
+    return (
+        <group position={position}>
+            {/* Ceiling mount */}
+            <mesh position={[0, 0, 0]}>
+                <cylinderGeometry args={[0.15, 0.15, 0.1, 12]} />
+                <meshStandardMaterial color="#FFFFFF" />
+            </mesh>
+            {/* Down rod */}
+            <mesh position={[0, -0.2, 0]}>
+                <cylinderGeometry args={[0.03, 0.03, 0.3, 8]} />
+                <meshStandardMaterial color="#CCCCCC" metalness={0.6} />
+            </mesh>
+            {/* Motor housing */}
+            <mesh position={[0, -0.4, 0]}>
+                <cylinderGeometry args={[0.18, 0.15, 0.15, 12]} />
+                <meshStandardMaterial color="#FFFFFF" />
+            </mesh>
+            {/* Fan blades group - this rotates */}
+            <group ref={fanRef} position={[0, -0.45, 0]}>
+                {/* 4 fan blades */}
+                {[0, 1, 2, 3].map((i) => {
+                    const angle = (i / 4) * Math.PI * 2;
+                    return (
+                        <group key={i} rotation={[0, angle, 0]}>
+                            {/* Blade arm */}
+                            <mesh position={[0.35, 0, 0]} rotation={[0, 0, 0.05]}>
+                                <boxGeometry args={[0.55, 0.02, 0.12]} />
+                                <meshStandardMaterial color="#D2B48C" roughness={0.7} />
+                            </mesh>
+                        </group>
+                    );
+                })}
+            </group>
+            {/* Light fixture at bottom */}
+            <mesh position={[0, -0.55, 0]}>
+                <sphereGeometry args={[0.12, 12, 12]} />
+                <meshStandardMaterial 
+                    color="#FFFEF0" 
+                    emissive="#FFF8DC" 
+                    emissiveIntensity={0.5}
+                    transparent
+                    opacity={0.9}
+                />
+            </mesh>
+            <pointLight position={[0, -0.6, 0]} color="#FFF8DC" intensity={0.8} distance={5} />
+        </group>
+    );
+};
+
+// Wall-Mounted Exhaust Ventilation Fan - Interactive (Click to toggle)
+const ExhaustFan = ({ position, rotation = [0, 0, 0], speed = 2, interactionDistance = 3 }) => {
+    const bladeRef = useRef();
+    const groupRef = useRef();
+    const fanRef = useRef();
+    const [isOn, setIsOn] = useState(false);
+    const [isNearby, setIsNearby] = useState(false);
+    const { camera, raycaster } = useThree();
+    const [, getKeys] = useKeyboardControls();
+    const lastInteract = useRef(false);
+    const frameCounter = useRef(0);
+    const posCache = useRef(new THREE.Vector3());
+    const currentSpeed = useRef(0);
+
+    useFrame(() => {
+        if (!bladeRef.current || !groupRef.current || !fanRef.current) return;
+
+        // Throttle proximity checks to every 10 frames
+        frameCounter.current++;
+        const shouldCheck = frameCounter.current >= 10;
+        if (shouldCheck) frameCounter.current = 0;
+
+        if (shouldCheck) {
+            groupRef.current.getWorldPosition(posCache.current);
+            const distance = camera.position.distanceTo(posCache.current);
+            const isClose = distance < interactionDistance;
+
+            let isLookingAt = false;
+            if (isClose) {
+                raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+                const intersects = raycaster.intersectObject(fanRef.current, true);
+                isLookingAt = intersects.length > 0;
+            }
+
+            const nowNearby = isClose && isLookingAt;
+            if (nowNearby !== isNearby) {
+                setIsNearby(nowNearby);
+            }
+        }
+
+        // Handle E key press - toggle fan
+        const { interact } = getKeys();
+        if (isNearby && interact && !lastInteract.current) {
+            setIsOn(prev => !prev);
+        }
+        lastInteract.current = interact;
+
+        // Smooth speed transition (ramp up/down)
+        const targetSpeed = isOn ? speed : 0;
+        currentSpeed.current += (targetSpeed - currentSpeed.current) * 0.02;
+        
+        // Spin the exhaust fan blades
+        bladeRef.current.rotation.z += 0.1 * currentSpeed.current;
+    });
+
+    return (
+        <group ref={groupRef} position={position} rotation={rotation}>
+            <group ref={fanRef}>
+                {/* Outer square housing/frame - light gray */}
+                <Box args={[0.7, 0.7, 0.12]}>
+                    <meshStandardMaterial color="#D0D0D0" />
+                </Box>
+                
+                {/* Inner circular recessed area (dark black) */}
+                <mesh position={[0, 0, 0.04]}>
+                    <circleGeometry args={[0.28, 32]} />
+                    <meshStandardMaterial color="#1a1a1a" />
+                </mesh>
+                
+                {/* Circular rim around opening */}
+                <mesh position={[0, 0, 0.05]}>
+                    <torusGeometry args={[0.28, 0.02, 12, 32]} />
+                    <meshStandardMaterial color="#C0C0C0" />
+                </mesh>
+                
+                {/* Spinning blades group */}
+                <group ref={bladeRef} position={[0, 0, 0.06]}>
+                    {/* 5 wide paddle-shaped fan blades - light gray/white */}
+                    {[0, 1, 2, 3, 4].map((i) => {
+                        const angle = (i / 5) * Math.PI * 2;
+                        return (
+                            <group key={i} rotation={[0, 0, angle]}>
+                                {/* Wide paddle blade */}
+                                <mesh position={[0.15, 0, 0]} rotation={[0.15, 0, 0]}>
+                                    <boxGeometry args={[0.22, 0.12, 0.015]} />
+                                    <meshStandardMaterial color="#E8E8E8" />
+                                </mesh>
+                                {/* Blade tip (slightly wider) */}
+                                <mesh position={[0.24, 0, 0.005]} rotation={[0.2, 0, 0]}>
+                                    <boxGeometry args={[0.08, 0.14, 0.012]} />
+                                    <meshStandardMaterial color="#E0E0E0" />
+                                </mesh>
+                            </group>
+                        );
+                    })}
+                    
+                    {/* Large center hub - light gray */}
+                    <mesh position={[0, 0, 0.015]}>
+                        <cylinderGeometry args={[0.07, 0.07, 0.04, 24]} rotation={[Math.PI / 2, 0, 0]} />
+                        <meshStandardMaterial color="#D8D8D8" />
+                    </mesh>
+                    {/* Center hub cap */}
+                    <mesh position={[0, 0, 0.04]}>
+                        <sphereGeometry args={[0.025, 16, 16]} />
+                        <meshStandardMaterial color="#C0C0C0" />
+                    </mesh>
+                </group>
+                
+                {/* Power indicator LED */}
+                <mesh position={[0.25, -0.25, 0.07]}>
+                    <sphereGeometry args={[0.015, 8, 8]} />
+                    <meshStandardMaterial 
+                        color={isOn ? "#00ff00" : "#333333"} 
+                        emissive={isOn ? "#00ff00" : "#000000"}
+                        emissiveIntensity={isOn ? 0.5 : 0}
+                    />
+                </mesh>
+                
+                {/* Bottom label area */}
+                <Box args={[0.25, 0.06, 0.02]} position={[0, -0.28, 0.07]}>
+                    <meshStandardMaterial color="#B0B0B0" />
+                </Box>
+            </group>
+            
+            {/* Interaction prompt */}
+            {isNearby && (
+                <Html position={[0, 0.5, 0.1]} center>
+                    <div style={{
+                        background: 'rgba(0,0,0,0.8)',
+                        color: 'white',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        whiteSpace: 'nowrap',
+                        fontFamily: 'Arial, sans-serif'
+                    }}>
+                        Press <span style={{ 
+                            background: '#444', 
+                            padding: '2px 8px', 
+                            borderRadius: '4px',
+                            border: '1px solid #666'
+                        }}>E</span> to {isOn ? 'turn OFF' : 'turn ON'} fan
+                    </div>
+                </Html>
+            )}
+        </group>
+    );
+};
+
 const Console = ({ position }) => (
     <RigidBody type="fixed" position={position}>
         <Box args={[1, 0.8, 0.35]} position={[0, 0.4, 0]}>
@@ -1564,23 +1814,37 @@ function GroundFloor() {
             {/* Outer Walls - Expanded to x=\u00B118 */}
             <Wall position={[-18, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
 
-            <Table position={[-12, 0, 0]} args={[2.4, 0.75, 1.2]} color="#5C4033" />
-            {/* Dining Chairs (8 around table) */}
-            <DiningChair position={[-13.2, 0, 0]} rotation={[0, Math.PI / 2, 0]} />
-            <DiningChair position={[-10.8, 0, 0]} rotation={[0, -Math.PI / 2, 0]} />
-            <DiningChair position={[-12.5, 0, 0.8]} rotation={[0, Math.PI, 0]} />
-            <DiningChair position={[-11.5, 0, 0.8]} rotation={[0, Math.PI, 0]} />
-            <DiningChair position={[-12.5, 0, -0.8]} />
-            <DiningChair position={[-11.5, 0, -0.8]} />
-            <DiningChair position={[-13.2, 0, 0.5]} rotation={[0, Math.PI / 2, 0]} />
-            <DiningChair position={[-10.8, 0, -0.5]} rotation={[0, -Math.PI / 2, 0]} />
+            {/* Dining Table - centered in dining area */}
+            <Table position={[-12, 0, 0]} args={[2.2, 0.75, 1.4]} color="#5C4033" />
+            
+            {/* Dining Chairs - properly spaced around table */}
+            {/* Two chairs on each long side, one on each short end */}
+            {/* Left side chairs (facing right) */}
+            <DiningChair position={[-13.6, 0, 0.3]} rotation={[0, Math.PI / 2, 0]} />
+            <DiningChair position={[-13.6, 0, -0.3]} rotation={[0, Math.PI / 2, 0]} />
+            {/* Right side chairs (facing left) */}
+            <DiningChair position={[-10.4, 0, 0.3]} rotation={[0, -Math.PI / 2, 0]} />
+            <DiningChair position={[-10.4, 0, -0.3]} rotation={[0, -Math.PI / 2, 0]} />
+            {/* Back chairs (facing front) */}
+            <DiningChair position={[-12.4, 0, -1.1]} rotation={[0, 0, 0]} />
+            <DiningChair position={[-11.6, 0, -1.1]} rotation={[0, 0, 0]} />
+            {/* Front chairs (facing back) */}
+            <DiningChair position={[-12.4, 0, 1.1]} rotation={[0, Math.PI, 0]} />
+            <DiningChair position={[-11.6, 0, 1.1]} rotation={[0, Math.PI, 0]} />
 
             <Chandelier position={[-12, 2.5, 0]} />
 
-            {/* Crockery Cabinet */}
-            <RigidBody type="fixed" position={[-13, 0, 0]}>
+            {/* Crockery Cabinet - moved to wall, away from table */}
+            <RigidBody type="fixed" position={[-17.5, 0, 0]}>
                 <Box args={[0.5, 1.8, 1.2]} position={[0, 0.9, 0]}>
                     <meshStandardMaterial color="#5C4033" />
+                </Box>
+                {/* Glass doors */}
+                <Box args={[0.02, 1.2, 0.5]} position={[0.26, 1.1, -0.3]}>
+                    <meshStandardMaterial color="#87CEEB" transparent opacity={0.3} />
+                </Box>
+                <Box args={[0.02, 1.2, 0.5]} position={[0.26, 1.1, 0.3]}>
+                    <meshStandardMaterial color="#87CEEB" transparent opacity={0.3} />
                 </Box>
             </RigidBody>
 
@@ -1588,6 +1852,9 @@ function GroundFloor() {
 
             {/* --- KITCHEN BACK WALL (North Wall at z=-10) - Single solid wall --- */}
             <Wall position={[-12, 1.75, -10]} args={[12, 3.5, 0.2]} />
+
+            {/* Wall-Mounted Exhaust Ventilation Fan - on kitchen back wall */}
+            <ExhaustFan position={[-8, 2.5, -9.8]} rotation={[0, 0, 0]} speed={3} />
 
             {/* --- SIDE WALL (West Wall at x=-18) - Stove & Refrigerator --- */}
             {/* Interactive Refrigerator - against west wall, facing room */}
@@ -2050,6 +2317,9 @@ function GroundFloor() {
             <CeilingLight position={[-3, 3.55, 0]} intensity={1.2} /> {/* Dining (chandelier exists but add ambient) */}
             <CeilingLight position={[-14, 3.55, -7]} intensity={1.2} /> {/* Kitchen */}
             <CeilingLight position={[9, 3.55, -4]} intensity={0.8} /> {/* Guest Bedroom */}
+
+            {/* Kitchen Ceiling Ventilation Fan */}
+            <CeilingFan position={[-12, 3.5, -7]} speed={1.5} />
 
             {/* STAIRS to First Floor */}
             <Stairs position={[-4, 0, 3]} direction="up" steps={11} />
