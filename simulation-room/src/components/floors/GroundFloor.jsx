@@ -158,22 +158,33 @@ export const GroundFloor = () => {
 
             {/* === GUEST BEDROOM (East Wing) === */}
             <Wall position={[18, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
+            {/* Back wall for guest bedroom */}
+            <Wall position={[12, 1.75, -10]} args={[12, 3.5, 0.2]} />
 
-            {/* UPGRADED Guest Bedroom Furniture */}
-            <LuxuryBed position={[12, 0, -3]} size="queen" color="#546E7A" frameColor="#455A64" />
-            <Rug position={[12, 0.06, -3]} args={[3.5, 0.02, 2.5]} color="#ECEFF1" />
+            {/* Exhaust fan on the back wall */}
+            <ExhaustFan position={[15, 2.5, -9.8]} rotation={[0, 0, 0]} speed={2} />
 
-            <Nightstand position={[10.6, 0, -2]} />
-            <ModernLamp position={[10.6, 0.55, -2]} />
-            <Nightstand position={[10.6, 0, -4]} />
-            <ModernLamp position={[10.6, 0.55, -4]} />
+            {/* UPGRADED Guest Bedroom Furniture - Properly organized against walls */}
+            
+            {/* Bed with headboard flush against the back wall */}
+            <LuxuryBed position={[12, 0, -8.5]} size="queen" color="#546E7A" frameColor="#455A64" rotation={[0, Math.PI, 0]} />
+            <Rug position={[12, 0.06, -6]} args={[3.5, 0.02, 3.5]} color="#ECEFF1" />
+            
+            {/* Nightstands on either side of bed */}
+            <Nightstand position={[9.8, 0, -8.5]} />
+            <ModernLamp position={[9.8, 0.55, -8.5]} />
+            <Nightstand position={[14.2, 0, -8.5]} />
+            <ModernLamp position={[14.2, 0.55, -8.5]} />
+            
+            {/* Wall art above the bed */}
+            <WallArt position={[12, 2.2, -9.85]} rotation={[0, 0, 0]} args={[1.2, 0.9]} color="#009688" />
 
-            <ModernWardrobe position={[14, 0, -7]} width={2} rotation={[0, -Math.PI / 2, 0]} />
-
-            {/* Small Work Area */}
-            <GamingDesk position={[10, 0, -8.5]} rotation={[0, -Math.PI / 2, 0]} />
-            <ModernChair position={[10.8, 0, -8.5]} rotation={[0, Math.PI / 2, 0]} />
-            <WallArt position={[14, 2, -3]} rotation={[0, -Math.PI / 2, 0]} args={[1, 1.2]} color="#009688" />
+            {/* Wardrobe against the right wall */}
+            <ModernWardrobe position={[17.5, 0, -4]} width={2.5} rotation={[0, -Math.PI / 2, 0]} />
+            
+            {/* Work desk in corner (against left wall) */}
+            <GamingDesk position={[6.8, 0, -4]} rotation={[0, Math.PI / 2, 0]} />
+            <ModernChair position={[7.6, 0, -4]} rotation={[0, -Math.PI / 2, 0]} />
 
             {/* === GUEST BATHROOM (Near Guest Bedroom) === */}
             <Wall position={[8, 1.75, -9]} args={[4, 3.5, 0.2]} />
