@@ -7,6 +7,8 @@ import { Player } from './Player';
 import './App.css';
 import { Physics } from '@react-three/rapier';
 import { Hand } from './Hand';
+import { SimulationProvider } from './components/simulation/SimulationContext';
+import SimulationControlMenu from './components/simulation/SimulationControlMenu';
 
 // Create context for interaction state
 export const InteractionContext = createContext({
@@ -110,6 +112,7 @@ function App() {
     }, [showFridgePanel]);
 
     return (
+        <SimulationProvider>
         <InteractionContext.Provider value={{
             showTooltip,
             tooltipText,
@@ -488,7 +491,11 @@ function App() {
             }}>
                 Click to Start | WASD to Move | E to Interact
             </div>
+            
+            {/* Simulation Control Menu */}
+            <SimulationControlMenu />
         </InteractionContext.Provider>
+        </SimulationProvider>
     );
 }
 
