@@ -18,13 +18,13 @@ export const AlarmLight = ({ position, roomName }) => {
         
         // Fast flashing effect
         flashPhase.current += delta * 8;
-        const intensity = Math.sin(flashPhase.current) > 0 ? 1 : 0.1;
+        const intensity = Math.sin(flashPhase.current) > 0 ? 1 : 0.15;
         
         if (lightRef.current) {
-            lightRef.current.intensity = intensity * 2;
+            lightRef.current.intensity = intensity * 15;
         }
         if (glowRef.current) {
-            glowRef.current.material.emissiveIntensity = intensity * 2;
+            glowRef.current.material.emissiveIntensity = intensity * 8;
         }
     });
     
@@ -38,35 +38,47 @@ export const AlarmLight = ({ position, roomName }) => {
             
             {/* Red dome light */}
             <mesh ref={glowRef} position={[0, -0.04, 0]}>
-                <sphereGeometry args={[0.06, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+                <sphereGeometry args={[0.08, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
                 <meshStandardMaterial 
                     color={alarmActive ? "#FF0000" : "#440000"}
                     emissive={alarmActive ? "#FF0000" : "#000000"}
-                    emissiveIntensity={alarmActive ? 1 : 0}
+                    emissiveIntensity={alarmActive ? 5 : 0}
                     transparent
-                    opacity={0.9}
+                    opacity={0.95}
+                    toneMapped={false}
                 />
             </mesh>
             
             {/* Inner bulb */}
-            <Sphere args={[0.03, 12, 12]} position={[0, -0.02, 0]}>
+            <Sphere args={[0.04, 12, 12]} position={[0, -0.02, 0]}>
                 <meshStandardMaterial 
                     color={alarmActive ? "#FF3300" : "#330000"}
                     emissive={alarmActive ? "#FF0000" : "#000000"}
-                    emissiveIntensity={alarmActive ? 2 : 0}
+                    emissiveIntensity={alarmActive ? 10 : 0}
+                    toneMapped={false}
                 />
             </Sphere>
             
             {/* Point light for room illumination when alarm is active */}
             {alarmActive && (
-                <pointLight 
-                    ref={lightRef}
-                    position={[0, -0.1, 0]} 
-                    color="#FF0000" 
-                    intensity={2} 
-                    distance={8}
-                    decay={2}
-                />
+                <>
+                    <pointLight 
+                        ref={lightRef}
+                        position={[0, -0.1, 0]} 
+                        color="#FF0000" 
+                        intensity={15} 
+                        distance={15}
+                        decay={1.5}
+                    />
+                    {/* Secondary fill light for more coverage */}
+                    <pointLight 
+                        position={[0, -0.3, 0]} 
+                        color="#FF2200" 
+                        intensity={8} 
+                        distance={12}
+                        decay={2}
+                    />
+                </>
             )}
         </group>
     );
@@ -90,10 +102,10 @@ export const WallAlarmLight = ({ position, rotation = [0, 0, 0] }) => {
         const flash = Math.sin(flashPhase.current) > 0.7 ? 1 : 0;
         
         if (lightRef.current) {
-            lightRef.current.intensity = flash * 3;
+            lightRef.current.intensity = flash * 20;
         }
         if (strobeRef.current) {
-            strobeRef.current.material.emissiveIntensity = flash * 3;
+            strobeRef.current.material.emissiveIntensity = flash * 12;
         }
     });
     
@@ -107,13 +119,14 @@ export const WallAlarmLight = ({ position, rotation = [0, 0, 0] }) => {
             
             {/* Strobe lens */}
             <mesh ref={strobeRef} position={[0, 0, 0.05]}>
-                <boxGeometry args={[0.08, 0.1, 0.02]} />
+                <boxGeometry args={[0.1, 0.12, 0.03]} />
                 <meshStandardMaterial 
                     color={alarmActive ? "#FF0000" : "#880000"}
                     emissive={alarmActive ? "#FF0000" : "#000000"}
-                    emissiveIntensity={0}
+                    emissiveIntensity={alarmActive ? 8 : 0}
                     transparent
-                    opacity={0.8}
+                    opacity={0.9}
+                    toneMapped={false}
                 />
             </mesh>
             
@@ -135,13 +148,23 @@ export const WallAlarmLight = ({ position, rotation = [0, 0, 0] }) => {
             
             {/* Light source */}
             {alarmActive && (
-                <pointLight 
-                    ref={lightRef}
-                    position={[0, 0, 0.2]} 
-                    color="#FF0000" 
-                    intensity={0} 
-                    distance={6}
-                />
+                <>
+                    <pointLight 
+                        ref={lightRef}
+                        position={[0, 0, 0.3]} 
+                        color="#FF0000" 
+                        intensity={20} 
+                        distance={12}
+                        decay={1.5}
+                    />
+                    <pointLight 
+                        position={[0, 0, 0.5]} 
+                        color="#FF2200" 
+                        intensity={10} 
+                        distance={10}
+                        decay={2}
+                    />
+                </>
             )}
         </group>
     );
@@ -159,7 +182,7 @@ export const SmokeDetector = ({ position }) => {
         if (ledRef.current) {
             if (alarmActive) {
                 // Fast red blink during alarm
-                ledRef.current.material.emissiveIntensity = Math.sin(blinkPhase.current) > 0 ? 1.5 : 0;
+                ledRef.current.material.emissiveIntensity = Math.sin(blinkPhase.current) > 0 ? 8 : 0;
                 ledRef.current.material.color.setHex(0xFF0000);
                 ledRef.current.material.emissive.setHex(0xFF0000);
             } else {
