@@ -1454,6 +1454,326 @@ function GroundFloor() {
             {/* Realistic Range Hood above stove - attached to wall */}
             <RealisticRangeHood position={[-17.5, 2.0, -5.5]} rotation={[0, Math.PI / 2, 0]} />
 
+            {/* ===== MODERN KITCHEN DESIGN ===== */}
+
+            {/* === WALL CABINETS (Along back wall) === */}
+            {/* Lower cabinets - olive green */}
+            <RigidBody type="fixed" position={[-12, 0, -9.5]}>
+                {/* Cabinet base */}
+                <Box args={[6, 0.9, 0.6]} position={[0, 0.45, 0]}>
+                    <meshStandardMaterial color="#6B8E23" />
+                </Box>
+                {/* Marble countertop */}
+                <Box args={[6.1, 0.05, 0.65]} position={[0, 0.93, 0]}>
+                    <meshStandardMaterial color="#F5F5F5" metalness={0.1} roughness={0.3} />
+                </Box>
+                {/* Backsplash */}
+                <Box args={[6, 0.6, 0.05]} position={[0, 1.3, -0.28]}>
+                    <meshStandardMaterial color="#D4C4A8" />
+                </Box>
+            </RigidBody>
+
+            {/* Modern Kitchen Sink - visible above counter */}
+            <group position={[-12, 0.96, -9.3]}>
+                {/* Sink rim/edge - visible from above */}
+                <Box args={[0.6, 0.03, 0.45]}>
+                    <meshStandardMaterial color="#A0A0A0" metalness={0.8} roughness={0.2} />
+                </Box>
+                {/* Sink basin walls */}
+                <Box args={[0.55, 0.2, 0.02]} position={[0, -0.1, 0.21]}>
+                    <meshStandardMaterial color="#888888" metalness={0.7} roughness={0.3} />
+                </Box>
+                <Box args={[0.55, 0.2, 0.02]} position={[0, -0.1, -0.21]}>
+                    <meshStandardMaterial color="#888888" metalness={0.7} roughness={0.3} />
+                </Box>
+                <Box args={[0.02, 0.2, 0.4]} position={[0.27, -0.1, 0]}>
+                    <meshStandardMaterial color="#888888" metalness={0.7} roughness={0.3} />
+                </Box>
+                <Box args={[0.02, 0.2, 0.4]} position={[-0.27, -0.1, 0]}>
+                    <meshStandardMaterial color="#888888" metalness={0.7} roughness={0.3} />
+                </Box>
+                {/* Sink bottom */}
+                <Box args={[0.52, 0.02, 0.38]} position={[0, -0.19, 0]}>
+                    <meshStandardMaterial color="#707070" metalness={0.8} roughness={0.2} />
+                </Box>
+                {/* Drain */}
+                <Cylinder args={[0.025, 0.025, 0.03, 12]} position={[0, -0.18, 0]}>
+                    <meshStandardMaterial color="#4A4A4A" metalness={0.9} />
+                </Cylinder>
+            </group>
+
+            {/* Modern Gooseneck Faucet */}
+            <group position={[-12, 0.96, -9.65]}>
+                {/* Faucet base plate */}
+                <Cylinder args={[0.04, 0.04, 0.02, 16]}>
+                    <meshStandardMaterial color="#C0C0C0" metalness={0.9} roughness={0.1} />
+                </Cylinder>
+                {/* Faucet vertical neck */}
+                <Cylinder args={[0.018, 0.018, 0.28, 12]} position={[0, 0.15, 0]}>
+                    <meshStandardMaterial color="#C0C0C0" metalness={0.9} roughness={0.1} />
+                </Cylinder>
+                {/* Gooseneck curve */}
+                <Cylinder args={[0.015, 0.015, 0.2, 12]} position={[0, 0.26, 0.1]} rotation={[Math.PI / 2.2, 0, 0]}>
+                    <meshStandardMaterial color="#C0C0C0" metalness={0.9} roughness={0.1} />
+                </Cylinder>
+                {/* Spout end */}
+                <Cylinder args={[0.012, 0.008, 0.05, 8]} position={[0, 0.17, 0.22]}>
+                    <meshStandardMaterial color="#C0C0C0" metalness={0.9} roughness={0.1} />
+                </Cylinder>
+                {/* Lever handle */}
+                <Box args={[0.07, 0.015, 0.025]} position={[0, 0.3, -0.02]}>
+                    <meshStandardMaterial color="#C0C0C0" metalness={0.9} roughness={0.1} />
+                </Box>
+            </group>
+
+            {/* Upper cabinets - olive green */}
+            <RigidBody type="fixed" position={[-12, 1.8, -9.65]}>
+                <Box args={[6, 0.8, 0.4]} position={[0, 0.4, 0]}>
+                    <meshStandardMaterial color="#6B8E23" />
+                </Box>
+            </RigidBody>
+
+            {/* Under-cabinet lighting strip */}
+            <Box args={[5.8, 0.02, 0.1]} position={[-12, 1.62, -9.5]}>
+                <meshStandardMaterial color="#FFFDE7" emissive="#FFFDE7" emissiveIntensity={0.3} />
+            </Box>
+
+            {/* === KITCHEN ISLAND WITH MARBLE TOP === */}
+            <RigidBody type="fixed" position={[-12, 0, -6]}>
+                {/* Island base - olive green */}
+                <Box args={[3.5, 0.9, 1.2]} position={[0, 0.45, 0]}>
+                    <meshStandardMaterial color="#6B8E23" />
+                </Box>
+                {/* Marble countertop - extends on one side */}
+                <Box args={[3.8, 0.08, 1.5]} position={[0, 0.94, 0.15]}>
+                    <meshStandardMaterial color="#F8F8F8" metalness={0.05} roughness={0.2} />
+                </Box>
+                {/* Marble side extension (for seating) */}
+                <Box args={[0.15, 0.6, 1.5]} position={[-1.8, 0.6, 0.15]}>
+                    <meshStandardMaterial color="#F0F0F0" metalness={0.05} roughness={0.2} />
+                </Box>
+            </RigidBody>
+
+            {/* === BAR STOOLS (4 stools along island) === */}
+            {[-13.2, -12.4, -11.6, -10.8].map((x, i) => (
+                <group key={i} position={[x, 0, -5.2]}>
+                    {/* Stool seat - wooden */}
+                    <Cylinder args={[0.18, 0.2, 0.05, 16]} position={[0, 0.75, 0]}>
+                        <meshStandardMaterial color="#8B6914" roughness={0.6} />
+                    </Cylinder>
+                    {/* Metal legs */}
+                    <Cylinder args={[0.015, 0.015, 0.75, 6]} position={[-0.1, 0.38, -0.1]} rotation={[0.1, 0, 0.1]}>
+                        <meshStandardMaterial color="#2C2C2C" metalness={0.7} />
+                    </Cylinder>
+                    <Cylinder args={[0.015, 0.015, 0.75, 6]} position={[0.1, 0.38, -0.1]} rotation={[0.1, 0, -0.1]}>
+                        <meshStandardMaterial color="#2C2C2C" metalness={0.7} />
+                    </Cylinder>
+                    <Cylinder args={[0.015, 0.015, 0.75, 6]} position={[-0.1, 0.38, 0.1]} rotation={[-0.1, 0, 0.1]}>
+                        <meshStandardMaterial color="#2C2C2C" metalness={0.7} />
+                    </Cylinder>
+                    <Cylinder args={[0.015, 0.015, 0.75, 6]} position={[0.1, 0.38, 0.1]} rotation={[-0.1, 0, -0.1]}>
+                        <meshStandardMaterial color="#2C2C2C" metalness={0.7} />
+                    </Cylinder>
+                </group>
+            ))}
+
+            {/* === PENDANT LIGHTS ABOVE ISLAND === */}
+            {[-12.8, -11.2].map((x, i) => (
+                <group key={i} position={[x, 2.5, -6]}>
+                    {/* Cord */}
+                    <Cylinder args={[0.008, 0.008, 0.5, 6]}>
+                        <meshStandardMaterial color="#333333" />
+                    </Cylinder>
+                    {/* Dome shade */}
+                    <Sphere args={[0.2, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2]} position={[0, -0.35, 0]}>
+                        <meshStandardMaterial color="#757575" metalness={0.7} roughness={0.3} side={2} />
+                    </Sphere>
+                    {/* Light */}
+                    <pointLight position={[0, -0.4, 0]} color="#FFF8E1" intensity={1.5} distance={4} />
+                </group>
+            ))}
+
+            {/* === REALISTIC KITCHEN ITEMS ON BACK COUNTER === */}
+
+            {/* Grocery bag with items peeking out */}
+            <group position={[-14.5, 0.96, -9.35]}>
+                {/* Paper bag */}
+                <Box args={[0.2, 0.25, 0.12]} position={[0, 0.13, 0]}>
+                    <meshStandardMaterial color="#C4A776" roughness={0.9} />
+                </Box>
+                {/* Celery sticking out */}
+                <Cylinder args={[0.015, 0.015, 0.15, 6]} position={[-0.05, 0.3, 0]} rotation={[0.1, 0, 0.15]}>
+                    <meshStandardMaterial color="#8BC34A" />
+                </Cylinder>
+                {/* Baguette sticking out */}
+                <Cylinder args={[0.025, 0.02, 0.18, 8]} position={[0.05, 0.32, 0.02]} rotation={[-0.1, 0, -0.1]}>
+                    <meshStandardMaterial color="#D4A574" roughness={0.7} />
+                </Cylinder>
+            </group>
+
+            {/* Milk carton */}
+            <group position={[-13.8, 0.96, -9.4]}>
+                <Box args={[0.08, 0.22, 0.08]} position={[0, 0.11, 0]}>
+                    <meshStandardMaterial color="#FFFFFF" />
+                </Box>
+                {/* Blue cap */}
+                <Box args={[0.06, 0.03, 0.06]} position={[0, 0.23, 0]}>
+                    <meshStandardMaterial color="#1976D2" />
+                </Box>
+                {/* Label */}
+                <Box args={[0.075, 0.1, 0.001]} position={[0, 0.1, 0.041]}>
+                    <meshStandardMaterial color="#42A5F5" />
+                </Box>
+            </group>
+
+            {/* Bread loaf in wrapper */}
+            <group position={[-13.3, 0.96, -9.35]}>
+                <Box args={[0.12, 0.1, 0.25]} position={[0, 0.05, 0]}>
+                    <meshStandardMaterial color="#FFE0B2" transparent opacity={0.7} />
+                </Box>
+                {/* Bread inside */}
+                <Box args={[0.1, 0.08, 0.22]} position={[0, 0.04, 0]}>
+                    <meshStandardMaterial color="#D7A86E" roughness={0.8} />
+                </Box>
+                {/* Twist tie */}
+                <Box args={[0.08, 0.01, 0.01]} position={[0, 0.08, 0.12]}>
+                    <meshStandardMaterial color="#F44336" />
+                </Box>
+            </group>
+
+            {/* Fruit bowl */}
+            <group position={[-12.5, 0.96, -9.35]}>
+                {/* Bowl */}
+                <Cylinder args={[0.15, 0.12, 0.08, 16]} position={[0, 0.04, 0]}>
+                    <meshStandardMaterial color="#ECEFF1" />
+                </Cylinder>
+                {/* Apples */}
+                <Sphere args={[0.045, 10, 10]} position={[-0.04, 0.12, 0]}>
+                    <meshStandardMaterial color="#C62828" roughness={0.4} />
+                </Sphere>
+                <Sphere args={[0.04, 10, 10]} position={[0.04, 0.11, 0.03]}>
+                    <meshStandardMaterial color="#43A047" roughness={0.4} />
+                </Sphere>
+                {/* Orange */}
+                <Sphere args={[0.045, 10, 10]} position={[0, 0.13, -0.04]}>
+                    <meshStandardMaterial color="#FF9800" roughness={0.5} />
+                </Sphere>
+                {/* Banana */}
+                <Cylinder args={[0.02, 0.015, 0.12, 6]} position={[0.06, 0.1, -0.02]} rotation={[0.3, 0.5, 0.2]}>
+                    <meshStandardMaterial color="#FFEB3B" roughness={0.6} />
+                </Cylinder>
+            </group>
+
+            {/* Coffee maker */}
+            <group position={[-11.8, 0.96, -9.45]}>
+                {/* Base */}
+                <Box args={[0.2, 0.05, 0.15]} position={[0, 0.025, 0]}>
+                    <meshStandardMaterial color="#212121" />
+                </Box>
+                {/* Carafe */}
+                <Cylinder args={[0.06, 0.05, 0.12, 12]} position={[0, 0.11, 0.02]}>
+                    <meshStandardMaterial color="#111111" transparent opacity={0.8} />
+                </Cylinder>
+                {/* Top unit */}
+                <Box args={[0.18, 0.15, 0.12]} position={[0, 0.13, -0.02]}>
+                    <meshStandardMaterial color="#212121" />
+                </Box>
+            </group>
+
+            {/* Cereal box */}
+            <group position={[-11.2, 0.96, -9.42]}>
+                <Box args={[0.06, 0.25, 0.18]} position={[0, 0.125, 0]}>
+                    <meshStandardMaterial color="#FFC107" />
+                </Box>
+                {/* Label area */}
+                <Box args={[0.001, 0.15, 0.12]} position={[0.031, 0.12, 0]}>
+                    <meshStandardMaterial color="#FF5722" />
+                </Box>
+            </group>
+
+            {/* Cutting board with knife */}
+            <group position={[-10.5, 0.96, -9.38]}>
+                <Box args={[0.25, 0.015, 0.18]} rotation={[0, 0.15, 0]}>
+                    <meshStandardMaterial color="#A1887F" roughness={0.7} />
+                </Box>
+                {/* Knife */}
+                <Box args={[0.18, 0.003, 0.025]} position={[0.05, 0.015, 0.04]}>
+                    <meshStandardMaterial color="#BDBDBD" metalness={0.8} />
+                </Box>
+                <Box args={[0.06, 0.012, 0.02]} position={[-0.06, 0.015, 0.04]}>
+                    <meshStandardMaterial color="#5D4037" />
+                </Box>
+            </group>
+
+            {/* Cooking oil bottle */}
+            <group position={[-9.9, 0.96, -9.42]}>
+                <Cylinder args={[0.035, 0.035, 0.18, 12]} position={[0, 0.09, 0]}>
+                    <meshStandardMaterial color="#FFEB3B" transparent opacity={0.7} />
+                </Cylinder>
+                <Cylinder args={[0.015, 0.015, 0.03, 8]} position={[0, 0.19, 0]}>
+                    <meshStandardMaterial color="#795548" />
+                </Cylinder>
+            </group>
+
+            {/* Spice jars */}
+            {[-9.5, -9.3, -9.1].map((x, i) => (
+                <group key={i} position={[x, 0.96, -9.42]}>
+                    <Cylinder args={[0.025, 0.025, 0.08, 10]} position={[0, 0.04, 0]}>
+                        <meshStandardMaterial color={['#8D6E63', '#F57C00', '#C62828'][i]} />
+                    </Cylinder>
+                    <Cylinder args={[0.027, 0.027, 0.015, 10]} position={[0, 0.085, 0]}>
+                        <meshStandardMaterial color="#616161" metalness={0.7} />
+                    </Cylinder>
+                </group>
+            ))}
+
+            {/* === ITEMS ON KITCHEN ISLAND === */}
+
+            {/* Coffee mug */}
+            <group position={[-12.5, 1.02, -6.2]}>
+                <Cylinder args={[0.04, 0.035, 0.08, 12]} position={[0, 0.04, 0]}>
+                    <meshStandardMaterial color="#FFFFFF" />
+                </Cylinder>
+                {/* Handle */}
+                <Box args={[0.015, 0.04, 0.03]} position={[0.045, 0.04, 0]}>
+                    <meshStandardMaterial color="#FFFFFF" />
+                </Box>
+            </group>
+
+            {/* Paper towel roll */}
+            <group position={[-11.5, 1.02, -6.3]}>
+                <Cylinder args={[0.05, 0.05, 0.2, 16]} rotation={[Math.PI / 2, 0, 0]}>
+                    <meshStandardMaterial color="#FAFAFA" />
+                </Cylinder>
+                {/* Inner tube */}
+                <Cylinder args={[0.02, 0.02, 0.21, 8]} rotation={[Math.PI / 2, 0, 0]}>
+                    <meshStandardMaterial color="#A1887F" />
+                </Cylinder>
+            </group>
+
+            {/* Plate with cookies/pastries */}
+            <group position={[-10.8, 1.02, -6.2]}>
+                <Cylinder args={[0.1, 0.1, 0.015, 16]} position={[0, 0.008, 0]}>
+                    <meshStandardMaterial color="#ECEFF1" />
+                </Cylinder>
+                {/* Cookies */}
+                <Cylinder args={[0.03, 0.03, 0.01, 10]} position={[-0.03, 0.02, 0]}>
+                    <meshStandardMaterial color="#D4A574" roughness={0.8} />
+                </Cylinder>
+                <Cylinder args={[0.03, 0.03, 0.01, 10]} position={[0.03, 0.02, 0.02]}>
+                    <meshStandardMaterial color="#C49A6C" roughness={0.8} />
+                </Cylinder>
+                <Cylinder args={[0.025, 0.025, 0.01, 10]} position={[0, 0.025, -0.02]}>
+                    <meshStandardMaterial color="#8D6E63" roughness={0.8} />
+                </Cylinder>
+            </group>
+
+            {/* Glass of water */}
+            <group position={[-13.2, 1.02, -6.15]}>
+                <Cylinder args={[0.03, 0.025, 0.1, 12]} position={[0, 0.05, 0]}>
+                    <meshStandardMaterial color="#E3F2FD" transparent opacity={0.4} />
+                </Cylinder>
+            </group>
 
             {/* === GUEST BEDROOM (East Wing) === */}
             {/* Only the outer east wall - entrance is from living room's east wall */}
