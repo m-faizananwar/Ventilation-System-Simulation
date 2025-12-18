@@ -5,7 +5,7 @@ import { Floor, Wall, InteractiveDoor, GlassWindow, CeilingLight, Door } from '.
 import { Rug, Sofa, Armchair, CoffeeTable, TVConsole, Bookshelf, Console, Mirror, ShoeRack, CoatHanger } from '../furniture/LivingRoomFurniture';
 import { Table, DiningChair, Chandelier, RealisticRangeHood } from '../furniture/KitchenFurniture';
 import { AnimatedTV, InteractiveStove, InteractiveRefrigerator, InteractiveFireplace } from '../interactive/InteractiveItems';
-import { CeilingFan, ExhaustFan } from '../interactive/Appliances';
+import { CeilingFan, ExhaustFan, SwitchBoard, PowerSocket, RoomHeater } from '../interactive/Appliances';
 import { PickableItem } from '../interactive/PickableItem';
 import { LuxuryBed, Nightstand, ModernWardrobe, GamingDesk, ModernChair, ModernLamp, PlantPot, WallArt } from '../furniture/BedroomFurniture';
 import { Toilet, Vanity, ShowerCubicle } from '../furniture/BathroomFurniture';
@@ -58,6 +58,15 @@ export const GroundFloor = () => {
             <TVConsole position={[0, 0, -9.3]} />
             <Bookshelf position={[-3, 0, -9.3]} rotation={[0, 0, 0]} />
             <Bookshelf position={[3, 0, -9.3]} rotation={[0, 0, 0]} />
+            
+            {/* Living Room Switch Board - on side wall near entrance */}
+            <SwitchBoard position={[5.85, 1.2, 0]} rotation={[0, -Math.PI / 2, 0]} numSwitches={4} hasSocket={true} roomName="Living Room" />
+            {/* Living Room Power Socket - near TV */}
+            <PowerSocket position={[4, 0.4, -9.85]} rotation={[0, 0, 0]} />
+            <PowerSocket position={[-4, 0.4, -9.85]} rotation={[0, 0, 0]} />
+            
+            {/* Living Room Heater - near armchairs */}
+            <RoomHeater position={[4.5, 0, -6]} rotation={[0, -Math.PI / 2, 0]} />
 
             {/* === DINING AREA (West of Living) === */}
             <Wall position={[-18, 1.75, -2.5]} args={[0.2, 3.5, 15]} />
@@ -82,6 +91,12 @@ export const GroundFloor = () => {
                     <meshStandardMaterial color="#87CEEB" transparent opacity={0.3} />
                 </Box>
             </RigidBody>
+            
+            {/* Dining Room Switch Board */}
+            <SwitchBoard position={[-17.85, 1.2, 2]} rotation={[0, Math.PI / 2, 0]} numSwitches={3} hasSocket={true} roomName="Dining Room" />
+            
+            {/* Dining Room Heater - against west wall */}
+            <RoomHeater position={[-17.5, 0, -2]} rotation={[0, Math.PI / 2, 0]} />
 
             {/* === KITCHEN === */}
             <Wall position={[-12, 1.75, -10]} args={[12, 3.5, 0.2]} />
@@ -89,6 +104,12 @@ export const GroundFloor = () => {
             <InteractiveRefrigerator position={[-17.4, 0, -8.5]} rotation={[0, Math.PI / 2, 0]} interactionDistance={3} />
             <InteractiveStove position={[-17.5, 0, -5.5]} rotation={[0, Math.PI / 2, 0]} interactionDistance={4} />
             <RealisticRangeHood position={[-17.5, 2.0, -5.5]} rotation={[0, Math.PI / 2, 0]} />
+            
+            {/* Kitchen Switch Board - on back wall */}
+            <SwitchBoard position={[-10, 1.2, -9.85]} rotation={[0, 0, 0]} numSwitches={4} hasSocket={true} roomName="Kitchen" />
+            {/* Kitchen Power Sockets */}
+            <PowerSocket position={[-17.85, 1.0, -7]} rotation={[0, Math.PI / 2, 0]} />
+            
             {/* ... Kitchen Cabinets and Items (Code preserved from previous step) ... */}
             <RigidBody type="fixed" position={[-12, 0, -9.5]}>
                 <Box args={[6, 0.9, 0.6]} position={[0, 0.45, 0]}>
@@ -163,6 +184,14 @@ export const GroundFloor = () => {
 
             {/* Exhaust fan on the back wall */}
             <ExhaustFan position={[8, 2.5, -9.8]} rotation={[0, 0, 0]} speed={2} />
+            
+            {/* Bedroom Switch Board - on right wall inside room */}
+            <SwitchBoard position={[17.85, 1.2, -4]} rotation={[0, -Math.PI / 2, 0]} numSwitches={4} hasSocket={true} roomName="Guest Bedroom" />
+            {/* Bedroom Power Sockets */}
+            <PowerSocket position={[17.85, 0.4, -8]} rotation={[0, -Math.PI / 2, 0]} />
+            <PowerSocket position={[17.85, 0.4, -2]} rotation={[0, -Math.PI / 2, 0]} />
+            {/* Bedside socket near nightstand */}
+            <PowerSocket position={[9.2, 0.4, -9.85]} rotation={[0, 0, 0]} />
 
             {/* UPGRADED Guest Bedroom Furniture - Properly organized against walls */}
             
@@ -194,6 +223,9 @@ export const GroundFloor = () => {
             {/* === WORK/STUDY AREA (Left side near entrance) === */}
             <GamingDesk position={[7, 0, -4]} rotation={[0, Math.PI / 2, 0]} />
             <ModernChair position={[7.8, 0, -4]} rotation={[0, -Math.PI / 2, 0]} color="#455A64" />
+            
+            {/* Room Heater - near the work area */}
+            <RoomHeater position={[7, 0, -2]} rotation={[0, 0, 0]} />
             
             {/* Bookshelf near desk */}
             <Bookshelf position={[6.3, 0, -6.5]} rotation={[0, Math.PI / 2, 0]} />

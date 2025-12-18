@@ -6,6 +6,7 @@ import { LuxuryBed, Nightstand, ModernWardrobe, GamingDesk, ModernChair, BunkBed
 import { AnimatedTV } from '../interactive/InteractiveItems';
 import { Armchair, Bookshelf, Rug } from '../furniture/LivingRoomFurniture';
 import { Bathtub, Vanity, ShowerCubicle, Toilet } from '../furniture/BathroomFurniture';
+import { SwitchBoard, PowerSocket, RoomHeater } from '../interactive/Appliances';
 
 export const FirstFloor = () => {
     return (
@@ -40,10 +41,19 @@ export const FirstFloor = () => {
             {/* Seating Area */}
             <Armchair position={[-4, 0, -9]} rotation={[0, Math.PI / 4, 0]} />
             <PlantPot position={[-5, 0, -9.5]} scale={1.2} />
+            
+            {/* Room Heater - near seating area */}
+            <RoomHeater position={[-3, 0, -6]} rotation={[0, Math.PI / 2, 0]} />
 
             {/* Media Wall */}
             <AnimatedTV position={[3.5, 1.5, -6]} rotation={[0, -Math.PI / 2, 0]} />
             <WallArt position={[0, 2, -5.2]} rotation={[0, 0, 0]} args={[1.5, 0.8]} color="#3949AB" />
+
+            {/* Master Bedroom Switch Board - near door */}
+            <SwitchBoard position={[-4.5, 1.2, -5.15]} rotation={[0, 0, 0]} roomName="Master Bedroom" />
+            <PowerSocket position={[-1.8, 0.4, -9.85]} rotation={[0, Math.PI, 0]} /> {/* Near nightstand */}
+            <PowerSocket position={[1.8, 0.4, -9.85]} rotation={[0, Math.PI, 0]} /> {/* Near nightstand */}
+            <PowerSocket position={[3.2, 0.4, -5.15]} rotation={[0, 0, 0]} /> {/* Near TV */}
 
             {/* Walk-in Closet */}
             <Wall position={[5, 1.75, -8]} args={[0.2, 3.5, 4]} />
@@ -78,6 +88,14 @@ export const FirstFloor = () => {
             <WallArt position={[9.9, 1.8, 1]} rotation={[0, -Math.PI / 2, 0]} args={[0.8, 1]} color="#FF9800" />
             <PlantPot position={[6, 0, 4]} />
 
+            {/* Children's Room Switch Board */}
+            <SwitchBoard position={[5.15, 1.2, -1]} rotation={[0, Math.PI / 2, 0]} roomName="Children's Room" />
+            <PowerSocket position={[5.15, 0.4, 2]} rotation={[0, Math.PI / 2, 0]} /> {/* Near bed */}
+            <PowerSocket position={[9.85, 0.4, -1]} rotation={[0, -Math.PI / 2, 0]} /> {/* Near desk */}
+            
+            {/* Children's Room Heater */}
+            <RoomHeater position={[6.5, 0, 0]} rotation={[0, Math.PI / 2, 0]} />
+
             {/* Toy chest */}
             <RigidBody type="fixed" position={[9, 0, 4]}>
                 <Box args={[0.8, 0.5, 0.5]} position={[0, 0.25, 0]}>
@@ -97,6 +115,14 @@ export const FirstFloor = () => {
             <Bookshelf position={[-9.5, 0, 1]} rotation={[0, Math.PI / 2, 0]} />
             <Bookshelf position={[-9.5, 0, 3]} rotation={[0, Math.PI / 2, 0]} />
             <PlantPot position={[-6, 0, 4]} scale={1.2} />
+
+            {/* Office Switch Board */}
+            <SwitchBoard position={[-5.15, 1.2, -1]} rotation={[0, -Math.PI / 2, 0]} roomName="Home Office" />
+            <PowerSocket position={[-9.85, 0.4, -2]} rotation={[0, Math.PI / 2, 0]} /> {/* Near desk */}
+            <PowerSocket position={[-5.15, 0.4, 2]} rotation={[0, -Math.PI / 2, 0]} /> {/* General use */}
+            
+            {/* Home Office Heater */}
+            <RoomHeater position={[-6.5, 0, 0]} rotation={[0, -Math.PI / 2, 0]} />
 
             {/* Landing / Hallway area - Stair opening */}
             <Floor position={[-4, 0.05, 3]} args={[2, 4]} color="#555" />
