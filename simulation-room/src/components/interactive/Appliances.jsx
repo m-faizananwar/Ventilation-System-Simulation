@@ -3,6 +3,7 @@ import { Box, Html } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
+import { useSimulation } from '../simulation/SimulationContext';
 
 // Animated Ceiling Ventilation Fan for Kitchen
 export const CeilingFan = ({ position, speed = 1 }) => {
@@ -64,11 +65,20 @@ export const CeilingFan = ({ position, speed = 1 }) => {
 };
 
 // Wall-Mounted Exhaust Ventilation Fan - Interactive (Click to toggle)
-export const ExhaustFan = ({ position, rotation = [0, 0, 0], speed = 2, interactionDistance = 3 }) => {
+// Also responds to RISC-V ventilation commands for emergency activation
+
+export const ExhaustFan = ({ position, rotation = [0, 0, 0], speed = 2, interactionDistance = 3, roomId = 'kitchen' }) => {
     const bladeRef = useRef();
     const groupRef = useRef();
     const fanRef = useRef();
-    const [isOn, setIsOn] = useState(false);
+    const [manualOn, setManualOn] = useState(false);
+
+    // Get ventilation state from RISC-V commands
+    const { ventilationStates } = useSimulation();
+    const autoOn = ventilationStates[roomId]?.active || false;
+
+    // Fan is ON if either manually toggled OR RISC-V activated ventilation
+    const isOn = manualOn || autoOn;
     const [isNearby, setIsNearby] = useState(false);
     const { camera, raycaster } = useThree();
     const [, getKeys] = useKeyboardControls();
@@ -103,10 +113,10 @@ export const ExhaustFan = ({ position, rotation = [0, 0, 0], speed = 2, interact
             }
         }
 
-        // Handle E key press - toggle fan
+        // Handle E key press - toggle manual fan control
         const { interact } = getKeys();
         if (isNearby && interact && !lastInteract.current) {
-            setIsOn(prev => !prev);
+            setManualOn(prev => !prev);
         }
         lastInteract.current = interact;
 
@@ -256,7 +266,7 @@ export const SwitchBoard = ({ position, rotation = [0, 0, 0], interactionDistanc
         // Handle number keys 1-4 to toggle individual switches
         if (isNearby) {
             const { interact } = getKeys();
-            
+
             // Cycle through switches with E key
             if (interact && !lastInteract.current) {
                 const nextSwitch = (hoveredSwitch + 1) % numSwitches;
@@ -300,12 +310,12 @@ export const SwitchBoard = ({ position, rotation = [0, 0, 0], interactionDistanc
                 <Box args={[boardWidth, boardHeight, 0.02]}>
                     <meshStandardMaterial color="#FAFAFA" roughness={0.3} />
                 </Box>
-                
+
                 {/* Outer frame/border */}
                 <Box args={[boardWidth + 0.01, boardHeight + 0.01, 0.015]} position={[0, 0, -0.003]}>
                     <meshStandardMaterial color="#E0E0E0" roughness={0.4} />
                 </Box>
-                
+
                 {/* Inner recessed area for switches */}
                 <Box args={[boardWidth - 0.02, boardHeight - 0.04, 0.005]} position={[0, hasSocket ? 0.02 : 0, 0.008]}>
                     <meshStandardMaterial color="#F5F5F5" roughness={0.35} />
@@ -319,17 +329,17 @@ export const SwitchBoard = ({ position, rotation = [0, 0, 0], interactionDistanc
                         <group key={i} position={[xPos, hasSocket ? 0.04 : 0.02, 0.012]}>
                             {/* Switch housing */}
                             <Box args={[0.04, 0.06, 0.015]}>
-                                <meshStandardMaterial 
-                                    color={isHovered ? "#E3F2FD" : "#FFFFFF"} 
-                                    roughness={0.25} 
+                                <meshStandardMaterial
+                                    color={isHovered ? "#E3F2FD" : "#FFFFFF"}
+                                    roughness={0.25}
                                 />
                             </Box>
-                            
+
                             {/* Rocker switch - tilts based on state */}
                             <group rotation={[isOn ? -0.15 : 0.15, 0, 0]}>
                                 <Box args={[0.032, 0.045, 0.012]} position={[0, 0, 0.01]}>
-                                    <meshStandardMaterial 
-                                        color={isOn ? "#4CAF50" : "#ECEFF1"} 
+                                    <meshStandardMaterial
+                                        color={isOn ? "#4CAF50" : "#ECEFF1"}
                                         roughness={0.2}
                                         metalness={0.1}
                                     />
@@ -339,17 +349,17 @@ export const SwitchBoard = ({ position, rotation = [0, 0, 0], interactionDistanc
                                     <meshStandardMaterial color={isOn ? "#81C784" : "#B0BEC5"} />
                                 </Box>
                             </group>
-                            
+
                             {/* LED indicator */}
                             <mesh position={[0, -0.038, 0.012]}>
                                 <sphereGeometry args={[0.004, 8, 8]} />
-                                <meshStandardMaterial 
+                                <meshStandardMaterial
                                     color={isOn ? "#4CAF50" : "#424242"}
                                     emissive={isOn ? "#4CAF50" : "#000000"}
                                     emissiveIntensity={isOn ? 1 : 0}
                                 />
                             </mesh>
-                            
+
                             {/* Switch number label */}
                             <Box args={[0.012, 0.008, 0.001]} position={[0, -0.048, 0.011]}>
                                 <meshStandardMaterial color="#757575" />
@@ -389,8 +399,8 @@ export const SwitchBoard = ({ position, rotation = [0, 0, 0], interactionDistanc
                 )}
 
                 {/* Mounting screws */}
-                {[[-boardWidth/2 + 0.015, boardHeight/2 - 0.015], [boardWidth/2 - 0.015, boardHeight/2 - 0.015],
-                  [-boardWidth/2 + 0.015, -boardHeight/2 + 0.015], [boardWidth/2 - 0.015, -boardHeight/2 + 0.015]].map(([x, y], i) => (
+                {[[-boardWidth / 2 + 0.015, boardHeight / 2 - 0.015], [boardWidth / 2 - 0.015, boardHeight / 2 - 0.015],
+                [-boardWidth / 2 + 0.015, -boardHeight / 2 + 0.015], [boardWidth / 2 - 0.015, -boardHeight / 2 + 0.015]].map(([x, y], i) => (
                     <group key={i} position={[x, y, 0.011]}>
                         <mesh>
                             <cylinderGeometry args={[0.006, 0.006, 0.004, 12]} rotation={[Math.PI / 2, 0, 0]} />
@@ -406,7 +416,7 @@ export const SwitchBoard = ({ position, rotation = [0, 0, 0], interactionDistanc
 
             {/* Interaction UI */}
             {isNearby && (
-                <Html position={[0, boardHeight/2 + 0.08, 0.03]} center>
+                <Html position={[0, boardHeight / 2 + 0.08, 0.03]} center>
                     <div style={{
                         background: 'rgba(0,0,0,0.85)',
                         color: 'white',
@@ -420,9 +430,9 @@ export const SwitchBoard = ({ position, rotation = [0, 0, 0], interactionDistanc
                             {roomName} Switches
                         </div>
                         {switches.map((isOn, i) => (
-                            <div key={i} style={{ 
-                                display: 'flex', 
-                                justifyContent: 'space-between', 
+                            <div key={i} style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
                                 alignItems: 'center',
                                 marginBottom: '4px',
                                 padding: '3px 6px',
@@ -430,16 +440,16 @@ export const SwitchBoard = ({ position, rotation = [0, 0, 0], interactionDistanc
                                 borderRadius: '4px'
                             }}>
                                 <span>
-                                    <span style={{ 
-                                        background: '#555', 
-                                        padding: '1px 6px', 
+                                    <span style={{
+                                        background: '#555',
+                                        padding: '1px 6px',
                                         borderRadius: '3px',
                                         marginRight: '6px',
                                         fontSize: '11px'
                                     }}>{i + 1}</span>
                                     {switchLabels[i] || `Switch ${i + 1}`}
                                 </span>
-                                <span style={{ 
+                                <span style={{
                                     color: isOn ? '#4CAF50' : '#f44336',
                                     fontWeight: 'bold',
                                     fontSize: '11px'
@@ -457,11 +467,11 @@ export const SwitchBoard = ({ position, rotation = [0, 0, 0], interactionDistanc
 
             {/* Ambient light when switches are on */}
             {switches.some(s => s) && (
-                <pointLight 
-                    position={[0, 0, 0.1]} 
-                    color="#4CAF50" 
-                    intensity={0.1} 
-                    distance={0.5} 
+                <pointLight
+                    position={[0, 0, 0.1]}
+                    color="#4CAF50"
+                    intensity={0.1}
+                    distance={0.5}
                 />
             )}
         </group>
@@ -480,7 +490,7 @@ export const PowerSocket = ({ position, rotation = [0, 0, 0] }) => {
             <Box args={[0.095, 0.145, 0.01]} position={[0, 0, -0.003]}>
                 <meshStandardMaterial color="#E0E0E0" roughness={0.4} />
             </Box>
-            
+
             {/* Top socket */}
             <group position={[0, 0.035, 0.008]}>
                 <Box args={[0.055, 0.045, 0.008]}>
@@ -500,7 +510,7 @@ export const PowerSocket = ({ position, rotation = [0, 0, 0] }) => {
                     <meshStandardMaterial color="#1a1a1a" />
                 </mesh>
             </group>
-            
+
             {/* Bottom socket */}
             <group position={[0, -0.035, 0.008]}>
                 <Box args={[0.055, 0.045, 0.008]}>
@@ -519,7 +529,7 @@ export const PowerSocket = ({ position, rotation = [0, 0, 0] }) => {
                     <meshStandardMaterial color="#1a1a1a" />
                 </mesh>
             </group>
-            
+
             {/* Mounting screws */}
             {[[0, 0.06], [0, -0.06]].map(([x, y], i) => (
                 <mesh key={i} position={[x, y, 0.01]}>
@@ -589,7 +599,7 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
         // Smooth glow transition with subtle pulse when on
         const targetGlow = isOn ? heatLevel * 0.4 : 0;
         glowIntensity.current += (targetGlow - glowIntensity.current) * 0.03;
-        
+
         // Subtle heating element pulse effect
         if (isOn) {
             pulsePhase.current += delta * 2;
@@ -606,21 +616,21 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
         <group ref={groupRef} position={position} rotation={rotation}>
             <group ref={heaterRef}>
                 {/* Main body - sleek white panel design */}
-                <Box args={[heaterWidth, heaterHeight, heaterDepth]} position={[0, heaterHeight/2 + 0.08, 0]}>
+                <Box args={[heaterWidth, heaterHeight, heaterDepth]} position={[0, heaterHeight / 2 + 0.08, 0]}>
                     <meshStandardMaterial color="#F5F5F5" roughness={0.3} metalness={0.1} />
                 </Box>
-                
+
                 {/* Front panel frame - darker accent */}
-                <Box args={[heaterWidth + 0.02, heaterHeight + 0.02, 0.005]} position={[0, heaterHeight/2 + 0.08, heaterDepth/2 + 0.003]}>
+                <Box args={[heaterWidth + 0.02, heaterHeight + 0.02, 0.005]} position={[0, heaterHeight / 2 + 0.08, heaterDepth / 2 + 0.003]}>
                     <meshStandardMaterial color="#E0E0E0" roughness={0.4} />
                 </Box>
 
                 {/* Ventilation grille at top - where hot air comes out */}
-                <group position={[0, heaterHeight + 0.02, heaterDepth/2 - 0.02]}>
+                <group position={[0, heaterHeight + 0.02, heaterDepth / 2 - 0.02]}>
                     {Array.from({ length: 12 }).map((_, i) => (
                         <Box key={i} args={[heaterWidth - 0.08, 0.008, 0.025]} position={[0, -i * 0.012, 0]}>
-                            <meshStandardMaterial 
-                                color="#333333" 
+                            <meshStandardMaterial
+                                color="#333333"
                                 roughness={0.7}
                                 emissive={isOn ? "#FF4500" : "#000000"}
                                 emissiveIntensity={glowIntensity.current * 0.2 * pulseValue}
@@ -630,14 +640,14 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                 </group>
 
                 {/* Visible heating elements through front grille */}
-                <group position={[0, heaterHeight/2 + 0.08, heaterDepth/2 - 0.01]}>
+                <group position={[0, heaterHeight / 2 + 0.08, heaterDepth / 2 - 0.01]}>
                     {/* Heating element grille */}
                     {Array.from({ length: 8 }).map((_, i) => (
                         <Box key={i} args={[heaterWidth - 0.06, 0.012, 0.008]} position={[0, (i - 3.5) * 0.045, 0]}>
                             <meshStandardMaterial color="#2C2C2C" roughness={0.8} />
                         </Box>
                     ))}
-                    
+
                     {/* Glowing heating coils behind grille */}
                     {Array.from({ length: elementCount }).map((_, i) => {
                         const yPos = (i - (elementCount - 1) / 2) * 0.06;
@@ -647,7 +657,7 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                                 {/* Coil element */}
                                 <mesh>
                                     <torusGeometry args={[0.015, 0.003, 8, 32, Math.PI * 8]} />
-                                    <meshStandardMaterial 
+                                    <meshStandardMaterial
                                         color={activeElement ? "#FF6B35" : "#444444"}
                                         emissive={activeElement ? "#FF4500" : "#000000"}
                                         emissiveIntensity={activeElement ? glowIntensity.current * pulseValue : 0}
@@ -657,7 +667,7 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                                 {/* Horizontal heating wire */}
                                 <mesh position={[0, 0, 0]}>
                                     <boxGeometry args={[heaterWidth - 0.12, 0.006, 0.006]} />
-                                    <meshStandardMaterial 
+                                    <meshStandardMaterial
                                         color={activeElement ? "#FF8C00" : "#555555"}
                                         emissive={activeElement ? "#FF4500" : "#000000"}
                                         emissiveIntensity={activeElement ? glowIntensity.current * 1.2 * pulseValue : 0}
@@ -671,7 +681,7 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                 </group>
 
                 {/* Bottom intake grille */}
-                <group position={[0, 0.12, heaterDepth/2 - 0.02]}>
+                <group position={[0, 0.12, heaterDepth / 2 - 0.02]}>
                     {Array.from({ length: 6 }).map((_, i) => (
                         <Box key={i} args={[heaterWidth - 0.08, 0.006, 0.02]} position={[0, -i * 0.01, 0]}>
                             <meshStandardMaterial color="#444444" roughness={0.7} />
@@ -680,7 +690,7 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                 </group>
 
                 {/* Feet/stand */}
-                {[[-heaterWidth/2 + 0.06, 0], [heaterWidth/2 - 0.06, 0]].map(([x, z], i) => (
+                {[[-heaterWidth / 2 + 0.06, 0], [heaterWidth / 2 - 0.06, 0]].map(([x, z], i) => (
                     <group key={i} position={[x, 0, z]}>
                         {/* Foot */}
                         <Box args={[0.08, 0.08, 0.12]}>
@@ -694,18 +704,18 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                 ))}
 
                 {/* Control Panel - Right side */}
-                <group position={[heaterWidth/2 - 0.08, heaterHeight/2 + 0.08, heaterDepth/2 + 0.02]}>
+                <group position={[heaterWidth / 2 - 0.08, heaterHeight / 2 + 0.08, heaterDepth / 2 + 0.02]}>
                     {/* Panel background */}
                     <Box args={[0.12, 0.2, 0.015]}>
                         <meshStandardMaterial color="#1a1a1a" roughness={0.6} />
                     </Box>
-                    
+
                     {/* Power button - large circular */}
                     <group position={[0, 0.06, 0.01]}>
                         <mesh>
                             <cylinderGeometry args={[0.025, 0.025, 0.01, 24]} rotation={[Math.PI / 2, 0, 0]} />
-                            <meshStandardMaterial 
-                                color={isOn ? "#333333" : "#222222"} 
+                            <meshStandardMaterial
+                                color={isOn ? "#333333" : "#222222"}
                                 roughness={0.4}
                                 metalness={0.2}
                             />
@@ -713,14 +723,14 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                         {/* Power symbol */}
                         <mesh position={[0, 0, 0.006]}>
                             <ringGeometry args={[0.008, 0.012, 16, 1, 0, Math.PI * 1.5]} />
-                            <meshStandardMaterial 
+                            <meshStandardMaterial
                                 color={isOn ? "#FF4500" : "#666666"}
                                 emissive={isOn ? "#FF4500" : "#000000"}
                                 emissiveIntensity={isOn ? 0.8 : 0}
                             />
                         </mesh>
                         <Box args={[0.004, 0.012, 0.002]} position={[0, 0.006, 0.006]}>
-                            <meshStandardMaterial 
+                            <meshStandardMaterial
                                 color={isOn ? "#FF4500" : "#666666"}
                                 emissive={isOn ? "#FF4500" : "#000000"}
                                 emissiveIntensity={isOn ? 0.8 : 0}
@@ -733,7 +743,7 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                         <group key={level} position={[-0.03 + (level - 1) * 0.03, -0.02, 0.01]}>
                             <mesh>
                                 <cylinderGeometry args={[0.012, 0.012, 0.008, 16]} rotation={[Math.PI / 2, 0, 0]} />
-                                <meshStandardMaterial 
+                                <meshStandardMaterial
                                     color={isOn && heatLevel >= level ? "#FF6B35" : "#444444"}
                                     emissive={isOn && heatLevel >= level ? "#FF4500" : "#000000"}
                                     emissiveIntensity={isOn && heatLevel >= level ? 0.6 : 0}
@@ -754,7 +764,7 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                         </Box>
                         {/* Display segments showing temperature */}
                         <Box args={[0.05, 0.018, 0.002]} position={[0, 0, 0.004]}>
-                            <meshStandardMaterial 
+                            <meshStandardMaterial
                                 color={isOn ? "#FF3300" : "#220000"}
                                 emissive={isOn ? "#FF3300" : "#000000"}
                                 emissiveIntensity={isOn ? 0.8 : 0}
@@ -773,9 +783,9 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                 </group>
 
                 {/* Safety tip-over switch indicator */}
-                <mesh position={[-heaterWidth/2 + 0.05, 0.1, heaterDepth/2]}>
+                <mesh position={[-heaterWidth / 2 + 0.05, 0.1, heaterDepth / 2]}>
                     <sphereGeometry args={[0.008, 8, 8]} />
-                    <meshStandardMaterial 
+                    <meshStandardMaterial
                         color={isOn ? "#00FF00" : "#444444"}
                         emissive={isOn ? "#00FF00" : "#000000"}
                         emissiveIntensity={isOn ? 0.5 : 0}
@@ -783,12 +793,12 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                 </mesh>
 
                 {/* Brand label */}
-                <Box args={[0.08, 0.015, 0.002]} position={[0, 0.12, heaterDepth/2 + 0.005]}>
+                <Box args={[0.08, 0.015, 0.002]} position={[0, 0.12, heaterDepth / 2 + 0.005]}>
                     <meshStandardMaterial color="#CCCCCC" metalness={0.5} roughness={0.3} />
                 </Box>
 
                 {/* Power cord with plug */}
-                <group position={[-heaterWidth/2 + 0.05, 0.05, -heaterDepth/2]}>
+                <group position={[-heaterWidth / 2 + 0.05, 0.05, -heaterDepth / 2]}>
                     <mesh rotation={[0.5, 0, 0]}>
                         <cylinderGeometry args={[0.008, 0.008, 0.2, 8]} />
                         <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
@@ -804,18 +814,18 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
             {/* Heat glow effect when on - warm ambient light */}
             {isOn && (
                 <>
-                    <pointLight 
-                        position={[0, heaterHeight/2 + 0.1, heaterDepth/2 + 0.1]} 
-                        color="#FF6B35" 
-                        intensity={heatLevel * 0.4 * pulseValue} 
-                        distance={1.5 + heatLevel * 0.5} 
+                    <pointLight
+                        position={[0, heaterHeight / 2 + 0.1, heaterDepth / 2 + 0.1]}
+                        color="#FF6B35"
+                        intensity={heatLevel * 0.4 * pulseValue}
+                        distance={1.5 + heatLevel * 0.5}
                     />
                     {/* Secondary warm glow */}
-                    <pointLight 
-                        position={[0, heaterHeight + 0.05, 0]} 
-                        color="#FF8C42" 
-                        intensity={heatLevel * 0.2} 
-                        distance={2 + heatLevel} 
+                    <pointLight
+                        position={[0, heaterHeight + 0.05, 0]}
+                        color="#FF8C42"
+                        intensity={heatLevel * 0.2}
+                        distance={2 + heatLevel}
                     />
                 </>
             )}
@@ -835,8 +845,8 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                         boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
                         border: '1px solid rgba(255,255,255,0.1)'
                     }}>
-                        <div style={{ 
-                            fontWeight: 'bold', 
+                        <div style={{
+                            fontWeight: 'bold',
                             marginBottom: '8px',
                             display: 'flex',
                             alignItems: 'center',
@@ -846,7 +856,7 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                             <span style={{ fontSize: '16px' }}>🔥</span>
                             Panel Heater
                         </div>
-                        <div style={{ 
+                        <div style={{
                             color: isOn ? '#FF6B35' : '#888',
                             marginBottom: '8px',
                             fontSize: '14px',
@@ -855,9 +865,9 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                             {isOn ? `HEATING - Level ${heatLevel}` : 'OFF'}
                         </div>
                         {/* Heat level bars */}
-                        <div style={{ 
-                            display: 'flex', 
-                            justifyContent: 'center', 
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'center',
                             gap: '6px',
                             marginBottom: '10px'
                         }}>
@@ -865,12 +875,12 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                                 <div key={level} style={{
                                     width: '28px',
                                     height: '8px',
-                                    background: isOn && heatLevel >= level 
-                                        ? `linear-gradient(90deg, #FF4500, #FF6B35)` 
+                                    background: isOn && heatLevel >= level
+                                        ? `linear-gradient(90deg, #FF4500, #FF6B35)`
                                         : '#333',
                                     borderRadius: '4px',
-                                    boxShadow: isOn && heatLevel >= level 
-                                        ? '0 0 8px rgba(255,107,53,0.5)' 
+                                    boxShadow: isOn && heatLevel >= level
+                                        ? '0 0 8px rgba(255,107,53,0.5)'
                                         : 'none',
                                     transition: 'all 0.3s ease'
                                 }} />
@@ -878,8 +888,8 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                         </div>
                         {/* Temperature indicator */}
                         {isOn && (
-                            <div style={{ 
-                                fontSize: '11px', 
+                            <div style={{
+                                fontSize: '11px',
                                 color: '#FF8C42',
                                 marginBottom: '8px'
                             }}>
@@ -887,9 +897,9 @@ export const RoomHeater = ({ position, rotation = [0, 0, 0], interactionDistance
                             </div>
                         )}
                         <div style={{ fontSize: '11px', color: '#aaa' }}>
-                            Press <span style={{ 
-                                background: 'linear-gradient(135deg, #555, #444)', 
-                                padding: '3px 10px', 
+                            Press <span style={{
+                                background: 'linear-gradient(135deg, #555, #444)',
+                                padding: '3px 10px',
                                 borderRadius: '4px',
                                 border: '1px solid #666'
                             }}>E</span> to {isOn ? (heatLevel < 3 ? 'increase heat' : 'turn OFF') : 'turn ON'}

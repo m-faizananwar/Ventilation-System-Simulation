@@ -58,13 +58,13 @@ export const GroundFloor = () => {
             <TVConsole position={[0, 0, -9.3]} />
             <Bookshelf position={[-3, 0, -9.3]} rotation={[0, 0, 0]} />
             <Bookshelf position={[3, 0, -9.3]} rotation={[0, 0, 0]} />
-            
+
             {/* Living Room Switch Board - on side wall near entrance */}
             <SwitchBoard position={[5.85, 1.2, 0]} rotation={[0, -Math.PI / 2, 0]} numSwitches={4} hasSocket={true} roomName="Living Room" />
             {/* Living Room Power Socket - near TV */}
             <PowerSocket position={[4, 0.4, -9.85]} rotation={[0, 0, 0]} />
             <PowerSocket position={[-4, 0.4, -9.85]} rotation={[0, 0, 0]} />
-            
+
             {/* Living Room Heater - near armchairs */}
             <RoomHeater position={[4.5, 0, -6]} rotation={[0, -Math.PI / 2, 0]} />
 
@@ -91,25 +91,25 @@ export const GroundFloor = () => {
                     <meshStandardMaterial color="#87CEEB" transparent opacity={0.3} />
                 </Box>
             </RigidBody>
-            
+
             {/* Dining Room Switch Board */}
             <SwitchBoard position={[-17.85, 1.2, 2]} rotation={[0, Math.PI / 2, 0]} numSwitches={3} hasSocket={true} roomName="Dining Room" />
-            
+
             {/* Dining Room Heater - against west wall */}
             <RoomHeater position={[-17.5, 0, -2]} rotation={[0, Math.PI / 2, 0]} />
 
             {/* === KITCHEN === */}
             <Wall position={[-12, 1.75, -10]} args={[12, 3.5, 0.2]} />
-            <ExhaustFan position={[-8, 2.5, -9.8]} rotation={[0, 0, 0]} speed={3} />
+            <ExhaustFan position={[-8, 2.5, -9.8]} rotation={[0, 0, 0]} speed={3} roomId="kitchen" />
             <InteractiveRefrigerator position={[-17.4, 0, -8.5]} rotation={[0, Math.PI / 2, 0]} interactionDistance={3} />
             <InteractiveStove position={[-17.5, 0, -5.5]} rotation={[0, Math.PI / 2, 0]} interactionDistance={4} />
             <RealisticRangeHood position={[-17.5, 2.0, -5.5]} rotation={[0, Math.PI / 2, 0]} />
-            
+
             {/* Kitchen Switch Board - on back wall */}
             <SwitchBoard position={[-10, 1.2, -9.85]} rotation={[0, 0, 0]} numSwitches={4} hasSocket={true} roomName="Kitchen" />
             {/* Kitchen Power Sockets */}
             <PowerSocket position={[-17.85, 1.0, -7]} rotation={[0, Math.PI / 2, 0]} />
-            
+
             {/* ... Kitchen Cabinets and Items (Code preserved from previous step) ... */}
             <RigidBody type="fixed" position={[-12, 0, -9.5]}>
                 <Box args={[6, 0.9, 0.6]} position={[0, 0.45, 0]}>
@@ -190,7 +190,7 @@ export const GroundFloor = () => {
                         <meshStandardMaterial color="#1565C0" />
                     </Box>
                     {/* Roof/triangle top */}
-                    <mesh position={[0, 0.27, 0]} rotation={[0, Math.PI/4, 0]}>
+                    <mesh position={[0, 0.27, 0]} rotation={[0, Math.PI / 4, 0]}>
                         <coneGeometry args={[0.055, 0.04, 4]} />
                         <meshStandardMaterial color="#1565C0" />
                     </mesh>
@@ -204,7 +204,7 @@ export const GroundFloor = () => {
                     </Box>
                 </group>
             </PickableItem>
-            
+
             {/* Tissue Paper Box */}
             <PickableItem position={[-11.2, 1.02, -6]} itemType="tissue-box">
                 <group>
@@ -233,7 +233,7 @@ export const GroundFloor = () => {
                     </Box>
                 </group>
             </PickableItem>
-            
+
             {/* Cookie Plate with Cookies */}
             <PickableItem position={[-13.3, 1.02, -5.8]} itemType="cookie-plate">
                 <group>
@@ -277,7 +277,7 @@ export const GroundFloor = () => {
                     </Sphere>
                 </group>
             </PickableItem>
-            
+
             {/* Coffee Mug */}
             <PickableItem position={[-10.6, 1.02, -6.3]} itemType="coffee-mug">
                 <group>
@@ -296,7 +296,7 @@ export const GroundFloor = () => {
                     </Cylinder>
                 </group>
             </PickableItem>
-            
+
             {/* Fruit Bowl on Island */}
             <group position={[-12, 1.02, -6.4]}>
                 {/* Bowl */}
@@ -325,8 +325,8 @@ export const GroundFloor = () => {
             <Wall position={[12, 1.75, -10]} args={[12, 3.5, 0.2]} />
 
             {/* Exhaust fan on the back wall */}
-            <ExhaustFan position={[8, 2.5, -9.8]} rotation={[0, 0, 0]} speed={2} />
-            
+            <ExhaustFan position={[8, 2.5, -9.8]} rotation={[0, 0, 0]} speed={2} roomId="guest-bedroom" />
+
             {/* Bedroom Switch Board - on right wall inside room */}
             <SwitchBoard position={[17.85, 1.2, -4]} rotation={[0, -Math.PI / 2, 0]} numSwitches={4} hasSocket={true} roomName="Guest Bedroom" />
             {/* Bedroom Power Sockets */}
@@ -336,21 +336,21 @@ export const GroundFloor = () => {
             <PowerSocket position={[9.2, 0.4, -9.85]} rotation={[0, 0, 0]} />
 
             {/* UPGRADED Guest Bedroom Furniture - Properly organized against walls */}
-            
+
             {/* === BED AREA (Against back wall, centered) === */}
             <LuxuryBed position={[12, 0, -8.5]} size="queen" color="#546E7A" frameColor="#455A64" rotation={[0, 0, 0]} />
-            
+
             {/* Large area rug under bed */}
             <Rug position={[12, 0.06, -6.5]} args={[5, 0.02, 5]} color="#37474F" />
             {/* Accent rug on top */}
             <Rug position={[12, 0.08, -5.5]} args={[3, 0.02, 2.5]} color="#ECEFF1" />
-            
+
             {/* Nightstands on either side of bed */}
             <Nightstand position={[9.6, 0, -8.5]} />
             <ModernLamp position={[9.6, 0.55, -8.5]} />
             <Nightstand position={[14.4, 0, -8.5]} />
             <ModernLamp position={[14.4, 0.55, -8.5]} />
-            
+
             {/* Wall art above the bed - Triptych style */}
             <WallArt position={[10.5, 2.2, -9.85]} rotation={[0, 0, 0]} args={[0.7, 0.9]} color="#00796B" />
             <WallArt position={[12, 2.2, -9.85]} rotation={[0, 0, 0]} args={[0.7, 0.9]} color="#004D40" />
@@ -358,20 +358,20 @@ export const GroundFloor = () => {
 
             {/* === WARDROBE AREA (Right wall) === */}
             <ModernWardrobe position={[17.3, 0, -6]} width={2.5} rotation={[0, -Math.PI / 2, 0]} />
-            
+
             {/* Full length mirror next to wardrobe */}
             <Mirror position={[17.85, 1.2, -3]} rotation={[0, -Math.PI / 2, 0]} args={[0.6, 1.8]} />
-            
+
             {/* === WORK/STUDY AREA (Left side near entrance) === */}
             <GamingDesk position={[7, 0, -4]} rotation={[0, Math.PI / 2, 0]} />
             <ModernChair position={[7.8, 0, -4]} rotation={[0, -Math.PI / 2, 0]} color="#455A64" />
-            
+
             {/* Room Heater - near the work area */}
             <RoomHeater position={[7, 0, -2]} rotation={[0, 0, 0]} />
-            
+
             {/* Bookshelf near desk */}
             <Bookshelf position={[6.3, 0, -6.5]} rotation={[0, Math.PI / 2, 0]} />
-            
+
             {/* === SEATING/READING AREA (Corner) === */}
             <Armchair position={[16, 0, -1.5]} rotation={[0, -Math.PI * 0.75, 0]} />
             {/* Elegant round side table */}
@@ -393,13 +393,13 @@ export const GroundFloor = () => {
                     <meshStandardMaterial color="#263238" metalness={0.5} roughness={0.4} />
                 </Cylinder>
             </RigidBody>
-            
+
             {/* === PLANTS & DECORATIONS === */}
             {/* Corner plant */}
             <PlantPot position={[17, 0, -9]} scale={1.3} />
             {/* Plant near window/entrance */}
             <PlantPot position={[6.5, 0, -1.5]} scale={1} />
-            
+
             {/* Woven storage basket */}
             <RigidBody type="fixed" position={[17, 0, -1]}>
                 {/* Basket body - woven texture simulated */}
@@ -418,7 +418,7 @@ export const GroundFloor = () => {
                     <meshStandardMaterial color="#6D4C41" roughness={0.85} />
                 </Cylinder>
             </RigidBody>
-            
+
             {/* Modern wall clock */}
             <group position={[17.85, 2.5, -6]} rotation={[0, -Math.PI / 2, 0]}>
                 {/* Clock frame */}
@@ -431,8 +431,8 @@ export const GroundFloor = () => {
                 </Cylinder>
                 {/* Hour markers */}
                 {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((angle, i) => (
-                    <Box key={i} args={[i % 3 === 0 ? 0.03 : 0.015, i % 3 === 0 ? 0.012 : 0.008, 0.005]} 
-                         position={[Math.sin(angle * Math.PI / 180) * 0.2, Math.cos(angle * Math.PI / 180) * 0.2, 0.035]}>
+                    <Box key={i} args={[i % 3 === 0 ? 0.03 : 0.015, i % 3 === 0 ? 0.012 : 0.008, 0.005]}
+                        position={[Math.sin(angle * Math.PI / 180) * 0.2, Math.cos(angle * Math.PI / 180) * 0.2, 0.035]}>
                         <meshStandardMaterial color="#1a1a1a" />
                     </Box>
                 ))}
@@ -449,7 +449,7 @@ export const GroundFloor = () => {
                     <meshStandardMaterial color="#D4AF37" metalness={0.8} roughness={0.2} />
                 </Cylinder>
             </group>
-            
+
             {/* Modern digital alarm clock on right nightstand */}
             <group position={[14.4, 0.56, -8.3]}>
                 {/* Clock body */}
@@ -469,7 +469,7 @@ export const GroundFloor = () => {
                     <meshStandardMaterial color="#263238" roughness={0.4} />
                 </Box>
             </group>
-            
+
             {/* Realistic book stack on left nightstand */}
             <group position={[9.6, 0.56, -8.3]}>
                 {/* Bottom book - hardcover */}
@@ -489,10 +489,10 @@ export const GroundFloor = () => {
                 </Box>
                 {/* Reading glasses on top */}
                 <group position={[0, 0.085, 0.02]} rotation={[0.1, 0.2, 0]}>
-                    <Cylinder args={[0.025, 0.025, 0.005, 16]} position={[-0.035, 0, 0]} rotation={[Math.PI/2, 0, 0]}>
+                    <Cylinder args={[0.025, 0.025, 0.005, 16]} position={[-0.035, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
                         <meshStandardMaterial color="#1a1a1a" metalness={0.3} />
                     </Cylinder>
-                    <Cylinder args={[0.025, 0.025, 0.005, 16]} position={[0.035, 0, 0]} rotation={[Math.PI/2, 0, 0]}>
+                    <Cylinder args={[0.025, 0.025, 0.005, 16]} position={[0.035, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
                         <meshStandardMaterial color="#1a1a1a" metalness={0.3} />
                     </Cylinder>
                     <Box args={[0.02, 0.003, 0.003]} position={[0, 0, 0]}>
@@ -500,13 +500,13 @@ export const GroundFloor = () => {
                     </Box>
                 </group>
             </group>
-            
+
             {/* Ceiling fan for the bedroom */}
             <CeilingFan position={[12, 3.5, -5]} speed={1.2} />
-            
+
             {/* Wall-mounted TV across from bed */}
             <AnimatedTV position={[12, 1.8, 4.8]} rotation={[0, Math.PI, 0]} />
-            
+
             {/* Modern TV console/media unit */}
             <RigidBody type="fixed" position={[12, 0, 4.5]}>
                 {/* Main body - floating style */}
@@ -542,10 +542,10 @@ export const GroundFloor = () => {
                     </Cylinder>
                 ))}
             </RigidBody>
-            
+
             {/* Decorative items on TV console */}
             <PlantPot position={[11.2, 0.64, 4.5]} scale={0.5} />
-            
+
             {/* Elegant photo frame */}
             <group position={[12.8, 0.72, 4.5]}>
                 {/* Frame */}
@@ -565,7 +565,7 @@ export const GroundFloor = () => {
                     <meshStandardMaterial color="#4E342E" roughness={0.5} />
                 </Box>
             </group>
-            
+
             {/* Decorative candles */}
             <group position={[12.3, 0.64, 4.55]}>
                 <Cylinder args={[0.025, 0.025, 0.12, 12]} position={[0, 0.06, 0]}>
@@ -594,7 +594,7 @@ export const GroundFloor = () => {
             <CeilingFan position={[-12, 3.5, -7]} speed={1.5} />
 
             {/* TV Lounge Exhaust Fan */}
-            <ExhaustFan position={[0, 2.5, -9.8]} rotation={[0, 0, 0]} speed={1.5} />
+            <ExhaustFan position={[0, 2.5, -9.8]} rotation={[0, 0, 0]} speed={1.5} roomId="living-room" />
         </group >
     );
 };
