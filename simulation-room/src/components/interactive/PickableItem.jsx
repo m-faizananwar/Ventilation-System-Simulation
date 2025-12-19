@@ -6,8 +6,31 @@ import * as THREE from 'three';
 // Stove burner positions for burning detection (stove is at -17.5, 0, -5.5)
 const STOVE_POSITION = [-17.5, 1.0, -5.5];
 const BURN_RADIUS = 1.5;
-// Items that don't burn (metal utensils)
+
+/**
+ * FIREPROOF ITEMS: Metal utensils that won't burn when placed on active stove burners
+ * These items are heat-resistant and will NOT catch fire.
+ */
 const FIREPROOF_ITEMS = ['kettle', 'pot', 'pan', 'mug'];
+
+/**
+ * BURNABLE ITEMS (implicit - all items NOT in FIREPROOF_ITEMS):
+ * - 'tissue-box' - Paper/tissues (highly flammable)
+ * - 'egg' - Organic food items
+ * - 'tea' - Dry organic material
+ * - 'roti' - Bread/organic material
+ * - Any other non-metal items
+ * 
+ * These items WILL burn when:
+ * 1. Placed within BURN_RADIUS of the stove
+ * 2. At least one stove burner is turned ON
+ * 3. Item is not currently being held by player
+ * 
+ * When burning, items will:
+ * - Display fire/flame animation
+ * - Contribute to smoke and pollution levels
+ * - Eventually be destroyed after 3 seconds of burning
+ */
 
 
 // Track which item is currently being held globally

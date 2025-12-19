@@ -314,7 +314,7 @@ export const RoomStatusLight = ({ position, roomId, rotation = [0, 0, 0] }) => {
     );
 };
 
-// Ventilation fan visual indicator
+// Ventilation fan visual indicator - ENHANCED for better visibility
 export const VentilationIndicator = ({ position, roomId }) => {
     const fanRef = useRef();
     const { ventilationStates } = useSimulation();
@@ -322,42 +322,69 @@ export const VentilationIndicator = ({ position, roomId }) => {
 
     useFrame((state, delta) => {
         if (fanRef.current && ventilation.active) {
-            const speed = ventilation.level === 'HIGH' ? 15 : ventilation.level === 'MEDIUM' ? 8 : 4;
+            // INCREASED SPEED: 3x faster for much more visible movement
+            const speed = ventilation.level === 'HIGH' ? 45 : ventilation.level === 'MEDIUM' ? 25 : 12;
             fanRef.current.rotation.z += delta * speed;
         }
     });
 
     return (
         <group position={position}>
-            {/* Vent grille */}
+            {/* Vent grille - darker when active for better contrast */}
             <mesh>
                 <boxGeometry args={[0.4, 0.4, 0.05]} />
-                <meshStandardMaterial color="#DDDDDD" roughness={0.4} />
+                <meshStandardMaterial
+                    color={ventilation.active ? "#CCCCCC" : "#DDDDDD"}
+                    roughness={0.4}
+                />
             </mesh>
 
-            {/* Fan blades */}
+            {/* Fan blades - LARGER and MORE VISIBLE */}
             <group ref={fanRef} position={[0, 0, -0.03]}>
                 {[0, 1, 2, 3].map(i => (
                     <mesh key={i} rotation={[0, 0, (i * Math.PI) / 2]}>
-                        <boxGeometry args={[0.15, 0.03, 0.01]} />
+                        {/* INCREASED size from 0.15 to 0.18 for better visibility */}
+                        <boxGeometry args={[0.18, 0.04, 0.015]} />
                         <meshStandardMaterial
-                            color={ventilation.active ? "#666666" : "#888888"}
+                            color={ventilation.active ? "#333333" : "#888888"}
+                            roughness={ventilation.active ? 0.3 : 0.6}
+                            metalness={ventilation.active ? 0.4 : 0.1}
                         />
                     </mesh>
                 ))}
+
+                {/* Center hub for visual reference - makes rotation more obvious */}
+                <mesh position={[0, 0, 0]}>
+                    <cylinderGeometry args={[0.04, 0.04, 0.02, 16]} rotation={[Math.PI / 2, 0, 0]} />
+                    <meshStandardMaterial
+                        color={ventilation.active ? "#222222" : "#666666"}
+                        roughness={0.4}
+                        metalness={0.5}
+                    />
+                </mesh>
             </group>
 
-            {/* Active indicator light */}
+            {/* Active indicator light - brighter and pulsing */}
             {ventilation.active && (
-                <mesh position={[0.12, 0.12, 0.03]}>
-                    <sphereGeometry args={[0.02, 8, 8]} />
+                <mesh position={[0.14, 0.14, 0.03]}>
+                    <sphereGeometry args={[0.025, 8, 8]} />
                     <meshStandardMaterial
                         color="#00FF00"
                         emissive="#00FF00"
-                        emissiveIntensity={3}
+                        emissiveIntensity={4}
                         toneMapped={false}
                     />
                 </mesh>
+            )}
+
+            {/* Subtle glow when active for enhanced visibility */}
+            {ventilation.active && (
+                <pointLight
+                    position={[0, 0, 0.05]}
+                    color="#00FF00"
+                    intensity={0.5}
+                    distance={1}
+                />
             )}
         </group>
     );
